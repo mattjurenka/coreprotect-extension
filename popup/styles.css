@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Lato&family=Open+Sans&family=Zilla+Slab&display=swap');
+/* 27187E, 758BFD, AEB8FE, F1F2F6, FF8600 */
+body {
+  padding: 0;
+  margin: 0;
+  background-color: #f1f2f6;
+  overflow: hidden;
+}
+#background {
+  border: 2px solid #27187E;
+  margin: 1rem;
+  padding: 1rem;
+  min-width: 24rem;
+  max-width: 24rem;
+  min-height: 32rem;
+  max-height: 32rem;
+  display: flex;
+  flex-direction: column;
+}
+h1 {
+  margin: 0;
+  padding: 0;
+  font-family: 'Zilla Slab', serif;
+  color: #27187E;
+  font-size: 2rem;
+}
+#title {
+  margin-bottom: 1rem;
+}
+#confirm {
+  'JetBrains Mono', monospace;
+}
+p {
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: black;
+  font-size: 1rem;
+  font-weight: bold;
+}
+.hr {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  border-top: 2px solid #27187E;
+}
+.button {
+  font-family: 'Zilla Slab', serif;
+  text-decoration: none;
+  font-size: 1.25rem;
+  border: 2px solid #27187E;
+  color: #271873;
+  border-radius: 0.25rem;
+  padding: 0.25rem 1rem;
+  transition: 0.25s;
+  cursor: pointer;
+}
+.button:hover {
+  background: #27187E;
+  color: #F1F2F6;
+  box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.3);
+}
+
+.button.danger {
+  background: #FF8600;
+  border-color: #FF8600;
+  color: black;
+}
+.button.danger:hover {
+  background: #F1F2F6;
+}
+
+.button.filled {
+  background-color: #27187E;
+  color: #F1F2F6;
+}
+.button.filled:hover {
+  background-color: #F1F2F6;
+  color: #27187E;
+}
+
+.action-bar {
+  margin-top: 0.5rem;
+  display: flex;
+}
+.action-bar > a:not(:first-child) {
+  margin-left: 1rem;
+}
+
+.contract-title {
+  font-weight: bolder;
+}
+td {
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: black;
+  font-size: 1rem;
+  font-weight: bold;
+}
+tr, table, tbody {
+  padding: 0;
+}
+td {
+  padding: 0 0.5rem;
+}
+table {
+  border-collapse: collapse;
+}
+
+.tabbar {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+.tabbar > div > a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: #27187E;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tabbar > div > a.selected {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.tabbar > .seperator {
+  height: 23px;
+  width: 2px;
+  background-color: #27187E;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+a {
+  color: #27187E;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+.mt-auto {
+  margin-top: auto;
+}
+#noeffects {
+  margin-top: 4rem;
+  text-align: center;
+}
+#dataview {
+  overflow: scroll;
+  max-height: 18rem;
+}
+#state_diff > div > a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: #27187E;
+  font-weight: bold;
+  cursor: pointer;
+}

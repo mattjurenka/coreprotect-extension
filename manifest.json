@@ -1,0 +1,36 @@
+{
+    "manifest_version": 2,
+    "name": "walletpitch",
+    "version": "1.0",
+
+    "description": "Wallet Pitch",
+
+    "icons": {
+        "48": "icons/icon-48.png"
+    },
+
+    "browser_action": {
+        "default_icon": {
+            "38": "icons/icon-48.png"
+        },
+        "default_title": "Wallet Pitch",
+        "default_popup": "popup/app.html"
+    },
+
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content_scripts/inject.js"]
+        }
+    ],
+    "background": {
+        "scripts": ["background_script.js"]
+    },
+    "applications": {
+        "gecko": {
+            "id": "extension@matthewjurenka.com"
+        }
+    },
+    "permissions": ["<all_urls>", "webRequest"]
+}
+

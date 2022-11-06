@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="load_data.js"></script>
+  </head>
+  <body>
+    <div id="background">
+      <h1 id="title">Approve Transaction?</h1>
+      <p id="subtitle">We detected the following effects:</p>
+      <div class="hr"></div>
+      <p id="noeffects">No Effects Found</p>
+      <div id="transfers">
+        <div class="tabbar">
+          <div><a id="reputation_tab" class="selected">Reputation</a></div>
+          <div class="seperator"></div>
+          <div><a id="call_trace_tab">Call Trace</a></div>
+          <div class="seperator"></div>
+          <div><a id="state_diff_tab">State Diff</a></div>
+        </div>
+        <div class="hr"></div>
+        <div id="dataview">
+          <div id="reputation"></div>
+          <div id="call_trace"></div>
+          <div id="state_diff"></div>
+        </div>
+      </div>
+      <div class="hr mt-auto"></div>
+      <p id="confirm">Continue with this transaction?</p>
+      <div class="action-bar">
+        <a id="approve" class="button filled">Yes</a>
+        <a id="reject" class="button">No</a>
+        <a id="report" class="button danger">Report</a>
+      </div>
+    </div>
+  </body>
+</html>
