@@ -4,13 +4,76 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="styles.css" />
     <script defer src="load_data.js"></script>
+    <style>
+      #overlay {
+        display: flex;
+        flex-direction: column;
+        width: 420px;
+        height: 550px;
+        position: absolute;
+        background: white;
+        transform: translate(0, -1rem);
+        padding: 1rem;
+      }
+      .overlay-hidden {
+        display: none !important;
+      }
+      .ack-container {
+        display: flex;
+        margin-top: 1rem;
+      }
+      .ack-container > input {
+        margin: 1rem;
+      }
+      #do-you-accept {
+        margin-top: auto;
+      }
+    </style>
   </head>
   <body>
+    <div id="overlay">
+      <h1 id="title">Welcome to Core Protect</h1>
+      <p>To use this extension, please acknowledge the following terms and conditions of using this service:</p>
+      <div class="ack-container">
+        <input type="checkbox" id="check1">
+        <p>
+          This product is in beta, so information may not be 100% accurate.
+        </p>
+      </div>
+      <div class="ack-container">
+        <input type="checkbox" id="check2">
+        <p>
+          Information provided by this product does not consitute an endorsement,
+          audit, or approval of any service, product, or financial instrument.
+        </p>
+      </div>
+      <div class="ack-container">
+        <input type="checkbox" id="check3">
+        <p>
+          You should use this product as a screening and research tool to verify
+          for yourself if the transaction is doing what you think it will. We cannot definitively tell you
+          whether or not you are getting scammed, and accept no responsibility for any loss of funds while
+          using this product.
+        </p>
+      </div>
+      <p id="do-you-accept">
+        Do you accept these terms and conditions?
+      </p>
+      <div class="action-bar">
+        <a id="agree" class="button filled">Yes</a>
+        <a id="disagree" class="button">No</a>
+      </div>
+    </div>
     <div id="background">
-      <h1 id="title">Approve Transaction?</h1>
+      <h1 id="title">Review Transaction</h1>
       <p id="subtitle">We detected the following effects:</p>
       <div class="hr"></div>
-      <p id="noeffects">No Effects Found</p>
+      <div id="noeffects">
+        <p>No Effects Found.</p>
+        <br />
+        <p>Ensure you are logged into Metamask, and
+        transactions will appear here for review before they are forwarded to your wallet and then to the network.</p>
+      </div>
       <div id="transfers">
         <div class="tabbar">
           <div><a id="reputation_tab" class="selected">Reputation</a></div>

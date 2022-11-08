@@ -1,9 +1,9 @@
 {
     "manifest_version": 2,
-    "name": "walletpitch",
+    "name": "coreprotect",
     "version": "1.0",
 
-    "description": "Wallet Pitch",
+    "description": "Core Protect",
 
     "icons": {
         "48": "icons/icon-48.png"
@@ -13,7 +13,7 @@
         "default_icon": {
             "38": "icons/icon-48.png"
         },
-        "default_title": "Wallet Pitch",
+        "default_title": "Core Protect",
         "default_popup": "popup/app.html"
     },
 

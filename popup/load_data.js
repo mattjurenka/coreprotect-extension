@@ -1,29 +1,39 @@
+document.getElementById("disagree").onclick = () => window.close()
+document.getElementById("agree").onclick = () => {
+  const agree1 = document.getElementById("check1").checked
+  const agree2 = document.getElementById("check2").checked
+  const agree3 = document.getElementById("check3").checked
+
+  if (agree1 && agree2 && agree3) {
+    localStorage.setItem("agreed_tos", "true")
+    document.getElementById("overlay").classList.add("overlay-hidden")
+  }
+}
+
+if (localStorage.getItem("agreed_tos") === "true") {
+  document.getElementById("overlay").classList.add("overlay-hidden")
+}
+
+let contract_data = {}
+
 let central_port = browser.runtime.connect({name:"extension@matthewjurenka.com"});
 central_port.onMessage.addListener(m => {
   console.log("Popup receiving message of type", m.msg_type, m)
   if (m.msg_type === "update_transfers") {
+    contract_data = m.contract_data_map
     set_transfers(m.state_diff)
-    populate_trace(m.call_trace, m.selectors_map)
-    populate_reputation(m.contracts_touched, m.scam_prob_map)
+    populate_trace(m.call_trace, m.contract_data_map)
+    populate_reputation(m.contracts_touched)
   } else if (m.msg_type === "close_window") {
     window.close()
   }
 })
 central_port.postMessage({ msg_type: "register_popup_port" })
 
-const scam_emoji_map = {"Low": "\u2705", "Medium": "\u26a0\ufe0f", "High": "🚩"}
-
-let contract_name_map = {
-  "0xdec8005ca1a3f90168c211406fefafa412467d81": ["Hop Protocol Message Router", "PolygonMessengerWrapper"],
-  "0xfe5e5d361b2ad62c541bab87c45a0b9b018389a2": ["Polymarket fx-root Bridge", "FxRoot"],
-  "0xb8901acb165ed027e32754e0ffe830802919727f": ["Hop Protocol L1 Bridge", "L1_ETH_Bridge"],
-  "0x28e4f3a7f651294b9564800b2d01f35189a5bfbe": ["Polygon StateSender", "StateSender"],
-  "0xace8a2d0f41702161d8363eddae981e844c35c6e": ["Cool Monkes Trainers", "CoolMonkeTrainers"],
-  "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45": ["Uniswap Router", "SwapRouter02"],
-  "0x6b175474e89094c44da98b954eedeac495271d0f": ["DAI Stablecoin", "Dai"],
-  "0x60594a405d53811d3bc4766596efd80fd545a270": ["Uniswap Liquidity Pool", "UniswapV3Pool"],
-  "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": ["Wrapped ETH Token", "WETH9"]
+const scam_emoji_map = {
+  "Low": "😨", "Neutral": "🙂", "High": "😀", "Unknown": "🤔"
 }
+
 
 const NO_EFFECTS_EL = document.getElementById("noeffects")
 const EFFECTS_EL = document.getElementById("transfers")
@@ -61,6 +71,7 @@ const REPUTATION_TAB_EL = document.getElementById("reputation_tab")
 
 const strip_zeros = (str) => str.replace(/0x0*/, "0x")
 const shorten_hex = str => str.substring(0, 6) + "..." + str.substring(str.length - 4, str.length) 
+const shorten_name = str => str.length > 30 ? str.substring(0, 27) + "..." : str
 const get_shorten_hex_el = (str) => {
   const p = document.createElement("p")
   p.textContent = shorten_hex(str)
@@ -68,17 +79,21 @@ const get_shorten_hex_el = (str) => {
   return p
 }
 
+
 const get_etherscan_link = address => {
   const url = `https://etherscan.io/address/${address}`
   const a = document.createElement("a")
 
+  const contract_name = contract_data[address]?.contract_name
+
   a.replaceChildren(
-    address in contract_name_map ?
-      document.createTextNode(contract_name_map[address][0]) :
+    contract_name ?
+      document.createTextNode(shorten_name(contract_name)) :
       shorten_hex(address)
   )
   a.onclick = () => central_port.postMessage({msg_type: "open_tab", url})
   a.style.cursor = "pointer"
+  a.title = address
 
   return a
 }
@@ -138,13 +153,13 @@ const set_transfers = (state_diff_by_contract) => {
   }
 }
 
-const recurse_trace_el = ([{from, to, input}, ...subcalls], selectors_map) => {
+const recurse_trace_el = ([{from, to, input}, ...subcalls], contract_data) => {
 
   const trace_display = document.createElement("div")
   trace_display.style.marginLeft = "1rem"
 
   const trace_header = document.createElement("p")
-  const fn_name = selectors_map[to]?.[input.slice(2, 10)]?.split("(")?.[0]
+  const fn_name = contract_data[to]?.selectors?.[input.slice(2, 10)]?.split("(")?.[0]
   trace_header.replaceChildren(...(fn_name ?
     [document.createTextNode(`${fn_name} @ `), get_etherscan_link(to)] :
     from == to ?
@@ -152,14 +167,14 @@ const recurse_trace_el = ([{from, to, input}, ...subcalls], selectors_map) => {
       [document.createTextNode("Unknown "), get_etherscan_link(from), document.createTextNode(" internal call")]
   ))
 
-  trace_display.replaceChildren(trace_header, ...(subcalls.map(x => recurse_trace_el(x, selectors_map))))
+  trace_display.replaceChildren(trace_header, ...(subcalls.map(x => recurse_trace_el(x, contract_data))))
 
   return trace_display
 }
 
-const populate_trace = (trace, selectors_map) => {
+const populate_trace = (trace, contract_data) => {
   try {
-    const trace_el = recurse_trace_el(trace, selectors_map)
+    const trace_el = recurse_trace_el(trace, contract_data)
     trace_el.style.marginLeft = "0rem"
     CALL_TRACE_EL.replaceChildren(trace_el)
   } catch (err) {
@@ -167,24 +182,67 @@ const populate_trace = (trace, selectors_map) => {
   }
 }
 
-const populate_reputation = (contracts_touched, scam_prob_map) => {
+const get_score_category = (score) => {
+  if (score === null) {
+    return "Unknown"
+  } else if (score < 40) {
+    return "Low"
+  } else if (score < 60) {
+    return "Neutral"
+  } else {
+    return "High"
+  }
+}
+
+const populate_reputation = (contracts_touched) => {
   try {
-    REPUTATION_EL.replaceChildren(...Array.from(contracts_touched)
-      .map(contract => [contract, scam_prob_map[contract] || "Low"])
-      .sort(([_, prob1], [__, prob2]) => {
-        const map = { "High": 0, "Medium": 1, "Low": 2 }
-        if (prob1 === prob2) {
-          return 0
-        }
-        return map[prob1] < map[prob2] ? -1 : 1
-      })
-      .map(([contract, scam_prob]) => {
-        const contract_rep_el = document.createElement("p")
-        contract_rep_el.replaceChildren(
-          document.createTextNode(`${scam_emoji_map[scam_prob]} Risk for `),
+    const title_bar = document.createElement("div")
+    title_bar.classList.add("rep_title_bar")
+    title_bar.style.marginBottom = "0.25rem"
+
+    const contract_title = document.createElement("p")
+    contract_title.textContent = "Contract"
+
+    const score_title = document.createElement("p")
+    score_title.textContent = "Reputation"
+    score_title.classList.add("rep_score")
+
+    title_bar.replaceChildren(contract_title, score_title)
+
+    REPUTATION_EL.replaceChildren(title_bar, ...Array.from(contracts_touched)
+      .map(contract => [contract, contract_data[contract]?.bigcs_score || null])
+      //.sort(([_, score1], [__, score2]) => score2 - score1)
+      .map(([contract, score]) => {
+        const contract_rep_el = document.createElement("div")
+        contract_rep_el.classList.add("contract_rep")
+
+        const contract_title_bar = document.createElement("div")
+        contract_title_bar.classList.add("rep_title_bar")
+
+        const contract_title_el = document.createElement("p")
+        const score_category = get_score_category(score)
+        contract_title_el.replaceChildren(
+          document.createTextNode(`${scam_emoji_map[score_category]} `),
           get_etherscan_link(contract),
-          document.createTextNode(` is ${scam_prob}`)
         )
+        const reputation_score_el = document.createElement("p")
+        reputation_score_el.classList.add("rep_score")
+        reputation_score_el.replaceChildren(
+          document.createTextNode(score || "unknown")
+        )
+
+        contract_title_bar.replaceChildren(contract_title_el, reputation_score_el)
+
+        const chips = document.createElement("div")
+        chips.replaceChildren(...(contract_data[contract]?.chips || []).map(chip => {
+          const chip_el = document.createElement("p")
+          chip_el.textContent = chip
+          return chip_el
+        }))
+        chips.classList.add("chips")
+
+        contract_rep_el.replaceChildren(contract_title_bar, chips)
+
         return contract_rep_el
       }))
   } catch (err) {

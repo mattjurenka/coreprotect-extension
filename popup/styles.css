@@ -116,11 +116,11 @@ table {
   color: #27187E;
   font-weight: bold;
   cursor: pointer;
+  text-decoration: none !important;
 }
 
 .tabbar > div > a.selected {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
+  text-decoration: underline 2px !important;
 }
 
 .tabbar > .seperator {
@@ -142,9 +142,14 @@ a {
 #noeffects {
   margin-top: 4rem;
   text-align: center;
+  width: 100%;
+}
+.left {
+  text-align: left;
 }
 #dataview {
-  overflow: scroll;
+  overflow-x: scroll;
+  overflow-y: scroll;
   max-height: 18rem;
 }
 #state_diff > div > a {
@@ -153,4 +158,29 @@ a {
   color: #27187E;
   font-weight: bold;
   cursor: pointer;
+}
+#call_trace {
+  white-space: nowrap;
+}
+
+.chips > p {
+  background-color: #E0E1E6;
+  border-radius: 1rem;
+  padding: 0.1rem 0.5rem;
+  margin-top: 0.1rem
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.contract_rep {
+  margin-bottom: 0.5rem;
+}
+
+.rep_title_bar {
+  display: flex;
+}
+.rep_title_bar > .rep_score {
+  margin-left: auto;
 }
