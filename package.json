@@ -1,0 +1,19 @@
+{
+  "name": "coreprotect-extension",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build-chrome": "cp ./manifests/chromemanifest.json manifest.json",
+    "build-firefox": "cp ./manifests/firefoxmanifest.json manifest.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattjurenka/coreprotect-extension.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mattjurenka/coreprotect-extension/issues"
+  },
+  "homepage": "https://github.com/mattjurenka/coreprotect-extension#readme"
+}
