@@ -51,7 +51,7 @@ chrome.runtime.onConnect.addListener(port => {
 
           const url = chrome.runtime.getURL("popup/app.html")
           chrome.windows.create({
-            url, type: "popup", height: 580, width: 452
+            url, type: "popup", height: 620, width: 468
           })
 
           await simulate_transaction(m.from, m.to, m.input, m.value)
