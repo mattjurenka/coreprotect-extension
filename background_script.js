@@ -11,16 +11,15 @@ let contracts_touched = new Set()
 
 let popup_port = null
 let last_requested_content_port = null
+let loading = false
 
-browser.runtime.onConnect.addListener(port => {
+chrome.runtime.onConnect.addListener(port => {
   try {
     console.log("Registering port", port)
-    if (port.sender.envType === "addon_child") {
+    if (port.sender.url === chrome.runtime.getURL("popup/app.html")) {
       port.onMessage.addListener(m => {
         console.log("Background Script receiving message of type", m.msg_type, "from popup", m)
         if (m.msg_type === "register_popup_port") {
-          console.log("Opening", port?.sender?.contextId)
-          console.log("Sending close message to", popup_port?.sender?.contextId)
           try {
             if (popup_port) {
               popup_port.postMessage({
@@ -28,41 +27,43 @@ browser.runtime.onConnect.addListener(port => {
               })
             }
           } catch (err) {}
-          //console.log(popup_port, port)
           popup_port = port
-          //console.log(popup_port, port)
           popup_port.postMessage({
             msg_type: "update_transfers",
-            state_diff, call_trace, contracts_touched, contract_data_map, 
+            state_diff, call_trace,
+            contracts_touched: Array.from(contracts_touched),
+            contract_data_map, loading
           })
         } else if (m.msg_type === "respond_to_approve_request") {
           last_requested_content_port.postMessage({
             msg_type: "respond_to_approve_request", status: m.status
           })
         } else if (m.msg_type === "open_tab") {
-          browser.tabs.create({url: m.url})
+          chrome.tabs.create({url: m.url})
         }
       })
     } else {
       port.onMessage.addListener(async m => {
         console.log("Background Script receiving message of type", m.msg_type, "from page", m)
         if (m.msg_type === "simulate_transaction") {
+          loading = true
           last_requested_content_port = port
+
+          const url = chrome.runtime.getURL("popup/app.html")
+          chrome.windows.create({
+            url, type: "popup", height: 580, width: 452
+          })
 
           await simulate_transaction(m.from, m.to, m.input, m.value)
           await update_contract_data_map(Array.from(contracts_touched))
-          console.log("posting")
-          port.postMessage({
+          loading = false
+          popup_port.postMessage({
             msg_type: "update_transfers",
             state_diff,
             call_trace,
-            contracts_touched,
-            contract_data_map
-          })
-          console.log("Creating Window")
-          const url = browser.extension.getURL("popup/app.html")
-          browser.windows.create({
-            url, type: "popup", height: 580, width: 452
+            contracts_touched: Array.from(contracts_touched),
+            contract_data_map,
+            loading
           })
         }
       })
@@ -84,7 +85,6 @@ const simulate_transaction = async (from, to, input, value) => {
       })
     })
     const json = await res.json()
-    console.log("tenderly response:", json)
 
     state_diff = json.transaction.transaction_info.state_diff
       .reduce((acc, cur) => {
@@ -117,7 +117,6 @@ const simulate_transaction = async (from, to, input, value) => {
 }
 
 const update_contract_data_map = async (contracts) => {
-  console.log(contracts)
   return fetch(get_contract_data_endpoint, {
     method: "POST",
     headers: {
@@ -126,7 +125,6 @@ const update_contract_data_map = async (contracts) => {
     body: JSON.stringify({contracts})
   }).then(async resp => {
     const json = await resp.json()
-    console.log(contract_data_map, json)
     Object.assign(
       contract_data_map,
       Object.fromEntries(Object.entries(json).map(([address, val]) => [
@@ -136,11 +134,11 @@ const update_contract_data_map = async (contracts) => {
             ?.map(({ function_signature, selector }) => [selector, function_signature]) || []),
           "contract_name": val.data.metadata.etherscan_contract_source?.name,
           "bigcs_score": val.data.metadata.bigcs_data?.score,
-          "chips": (val.data.metadata.bigcs_data?.flags
-            ?.map(flag => flag.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")))
+          "flags": (val.data.metadata.bigcs_data?.flags
+            ?.map(flag => flag.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" "))),
+          "etherscan_nft_data": val.data.metadata.etherscan_nft_data
         }
       ]))
     )
-    console.log(contract_data_map)
   }).catch(console.error)
 }

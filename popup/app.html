@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="styles.css" />
     <script defer src="load_data.js"></script>
     <style>
-      #overlay {
+      .overlay {
         display: flex;
         flex-direction: column;
         width: 420px;
@@ -14,6 +14,9 @@
         background: white;
         transform: translate(0, -1rem);
         padding: 1rem;
+      }
+      #tos-overlay: {
+        z-index: 10;
       }
       .overlay-hidden {
         display: none !important;
@@ -31,7 +34,7 @@
     </style>
   </head>
   <body>
-    <div id="overlay">
+    <div id="tos-overlay" class="overlay">
       <h1 id="title">Welcome to Core Protect</h1>
       <p>To use this extension, please acknowledge the following terms and conditions of using this service:</p>
       <div class="ack-container">
@@ -69,10 +72,13 @@
       <p id="subtitle">We detected the following effects:</p>
       <div class="hr"></div>
       <div id="noeffects">
-        <p>No Effects Found.</p>
+        <p>No Transaction Received.</p>
         <br />
         <p>Ensure you are logged into Metamask, and
         transactions will appear here for review before they are forwarded to your wallet and then to the network.</p>
+      </div>
+      <div id="loading" class="hidden">
+        <p>Loading ...</p>
       </div>
       <div id="transfers">
         <div class="tabbar">
@@ -89,9 +95,9 @@
           <div id="state_diff"></div>
         </div>
       </div>
-      <div class="hr mt-auto"></div>
-      <p id="confirm">Continue with this transaction?</p>
-      <div class="action-bar">
+      <div id="action-bar-hr" class="hidden hr mt-auto"></div>
+      <p id="action-bar-confirm" class="hidden">Continue with this transaction?</p>
+      <div id="action-bar" class="action-bar hidden">
         <a id="approve" class="button filled">Yes</a>
         <a id="reject" class="button">No</a>
         <a id="report" class="button danger">Report</a>

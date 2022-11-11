@@ -6,22 +6,22 @@ document.getElementById("agree").onclick = () => {
 
   if (agree1 && agree2 && agree3) {
     localStorage.setItem("agreed_tos", "true")
-    document.getElementById("overlay").classList.add("overlay-hidden")
+    document.getElementById("tos-overlay").classList.add("overlay-hidden")
   }
 }
 
 if (localStorage.getItem("agreed_tos") === "true") {
-  document.getElementById("overlay").classList.add("overlay-hidden")
+  document.getElementById("tos-overlay").classList.add("overlay-hidden")
 }
 
 let contract_data = {}
 
-let central_port = browser.runtime.connect({name:"extension@matthewjurenka.com"});
+let central_port = chrome.runtime.connect();
 central_port.onMessage.addListener(m => {
   console.log("Popup receiving message of type", m.msg_type, m)
   if (m.msg_type === "update_transfers") {
     contract_data = m.contract_data_map
-    set_transfers(m.state_diff)
+    set_transfers(m.state_diff, m.loading)
     populate_trace(m.call_trace, m.contract_data_map)
     populate_reputation(m.contracts_touched)
   } else if (m.msg_type === "close_window") {
@@ -141,9 +141,16 @@ const get_state_diff_el = (contract, state_diff) => {
 }
 
 //Returns an element containing displays of all state diffs
-const set_transfers = (state_diff_by_contract) => {
-  if (Object.keys(state_diff_by_contract).length > 0) {
+const set_transfers = (state_diff_by_contract, loading) => {
+  if (loading) {
     NO_EFFECTS_EL.hidden = true
+    document.getElementById("loading").classList.remove("hidden")
+  } else if (Object.keys(state_diff_by_contract).length > 0) {
+    NO_EFFECTS_EL.hidden = true
+    document.getElementById("loading").classList.add("hidden")
+    document.getElementById("action-bar").classList.remove("hidden")
+    document.getElementById("action-bar-hr").classList.remove("hidden")
+    document.getElementById("action-bar-confirm").classList.remove("hidden")
     EFFECTS_EL.hidden = false
     STATE_DIFF_EL.replaceChildren(...(
       Object.entries(state_diff_by_contract)
@@ -156,7 +163,7 @@ const set_transfers = (state_diff_by_contract) => {
 const recurse_trace_el = ([{from, to, input}, ...subcalls], contract_data) => {
 
   const trace_display = document.createElement("div")
-  trace_display.style.marginLeft = "1rem"
+  trace_display.style.marginLeft = "0.6rem"
 
   const trace_header = document.createElement("p")
   const fn_name = contract_data[to]?.selectors?.[input.slice(2, 10)]?.split("(")?.[0]
@@ -202,6 +209,7 @@ const populate_reputation = (contracts_touched) => {
 
     const contract_title = document.createElement("p")
     contract_title.textContent = "Contract"
+    contract_title.onclick = () => console.log(contracts_touched, Array.from(contracts_touched))
 
     const score_title = document.createElement("p")
     score_title.textContent = "Reputation"
@@ -209,9 +217,8 @@ const populate_reputation = (contracts_touched) => {
 
     title_bar.replaceChildren(contract_title, score_title)
 
-    REPUTATION_EL.replaceChildren(title_bar, ...Array.from(contracts_touched)
+    REPUTATION_EL.replaceChildren(title_bar, ...contracts_touched
       .map(contract => [contract, contract_data[contract]?.bigcs_score || null])
-      //.sort(([_, score1], [__, score2]) => score2 - score1)
       .map(([contract, score]) => {
         const contract_rep_el = document.createElement("div")
         contract_rep_el.classList.add("contract_rep")
@@ -221,10 +228,24 @@ const populate_reputation = (contracts_touched) => {
 
         const contract_title_el = document.createElement("p")
         const score_category = get_score_category(score)
+
+        const rep_toggle_el = document.createElement("div")
+        rep_toggle_el.classList.add("toggle")
+        rep_toggle_el.classList.add("toggle-rotate")
+        rep_toggle_el.innerHTML = '<svg \
+          xmlns="http://www.w3.org/2000/svg" fill="none"\
+          viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"\
+          class="chevron"\
+        >\
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />\
+        </svg>'
         contract_title_el.replaceChildren(
           document.createTextNode(`${scam_emoji_map[score_category]} `),
           get_etherscan_link(contract),
+          rep_toggle_el
         )
+
+
         const reputation_score_el = document.createElement("p")
         reputation_score_el.classList.add("rep_score")
         reputation_score_el.replaceChildren(
@@ -233,15 +254,109 @@ const populate_reputation = (contracts_touched) => {
 
         contract_title_bar.replaceChildren(contract_title_el, reputation_score_el)
 
-        const chips = document.createElement("div")
-        chips.replaceChildren(...(contract_data[contract]?.chips || []).map(chip => {
-          const chip_el = document.createElement("p")
-          chip_el.textContent = chip
-          return chip_el
-        }))
-        chips.classList.add("chips")
+        const after_info = []
 
-        contract_rep_el.replaceChildren(contract_title_bar, chips)
+        const flags = contract_data[contract]?.flags || []
+        if (flags.length > 0) {
+          const bigcs_title = document.createElement("p")
+          bigcs_title.textContent = "Blockchain Intelligence Group Flags"
+          bigcs_title.style.marginTop = "0.5rem"
+
+          const flags_el = document.createElement("div")
+          flags_el.replaceChildren(...(flags).map(flag => {
+            const flag_el = document.createElement("p")
+            flag_el.textContent = flag
+            return flag_el
+          }))
+          flags_el.classList.add("chips")
+
+          after_info.push(bigcs_title, flags_el)
+        }
+
+        const link_data = data => {
+          const a = document.createElement("a")
+          a.onclick = () => central_port.postMessage({msg_type: "open_tab", url: data})
+          a.title = data
+          const href = data.replace(/https?:\/\/(www.)?/, "")
+          a.textContent = href.length > 25 ? href.substring(0, 22) + "..." : href
+          a.classList.add("rep_score")
+          a.style.fontWeight = "normal"
+          return a
+        }
+
+        const nft_data = contract_data[contract]?.etherscan_nft_data
+        if (nft_data?.symbol?.length > 0) {
+          const nft_data_order = [
+            ["blueCheckmark", "Blue Checkmark"],
+            ["website", "Website", link_data],
+            ["discord", "Discord", link_data],
+            ["twitter", "Twitter", link_data],
+            ["telegram", "Telegram", link_data],
+            ["github", "GitHub", link_data],
+            ["reddit", "Reddit", link_data],
+            ["linkedin", "LinkedIn", link_data],
+            ["facebook", "Facebook", link_data],
+            ["whitepaper", "Whitepaper", link_data],
+            ["blog", "Blog", link_data],
+            ["bitcointalk", "Bitcoin Talk", link_data]
+          ]
+          
+          const nft_data_title = document.createElement("p")
+          nft_data_title.textContent = "Etherscan NFT Data"
+          nft_data_title.style.marginTop = "0.5rem"
+
+          const nft_data_div = document.createElement("div")
+          nft_data_div.replaceChildren(...(
+            nft_data_order.map(([data_key, display_name, el_fn]) => {
+              const data = nft_data?.[data_key]
+              if (!data) {
+                return undefined
+              } else {
+                const data_div = document.createElement("div")
+                data_div.classList.add("rep_title_bar")
+
+                const data_div_title = document.createElement("p")
+                data_div_title.textContent = display_name
+                data_div_title.style.fontWeight = "normal"
+
+                const data_div_data = (() => {
+                  if (el_fn === undefined) {
+                    const data_div_data = document.createElement("p")
+                    data_div_data.classList.add("rep_score")
+                    data_div_data.textContent = data
+                    data_div_data.style.fontWeight = "normal"
+                    return data_div_data
+                  } else {
+                    return el_fn(data)
+                  }
+                })();
+
+                data_div.replaceChildren(data_div_title, data_div_data)
+                return data_div
+              }
+            }).filter(x => x !== undefined)
+          ))
+
+          after_info.push(nft_data_title, nft_data_div)
+        }
+
+        const get_rep_toggle = () => {
+          let shown = true
+          return () => {
+            shown = !shown
+            rep_toggle_el.classList[shown ? "add" : "remove"]("toggle-rotate")
+            after_info.forEach(el => {
+              el.classList[shown ? "remove" : "add"]("hidden")
+            })
+          }
+        }
+        rep_toggle_el.onclick = get_rep_toggle()
+
+        if (after_info.length === 0) {
+          rep_toggle_el.style.display = "none"
+        }
+
+        contract_rep_el.replaceChildren(contract_title_bar, ...after_info)
 
         return contract_rep_el
       }))
@@ -273,6 +388,10 @@ REPORT_EL.onclick = () => {
   central_port.postMessage({
     msg_type: "respond_to_approve_request",
     status: "reported"
+  })
+  central_port.postMessage({
+    msg_type: "open_tab",
+    url: "https://docs.google.com/forms/d/e/1FAIpQLSfVcT1HOjkgtXIWidYD7ILaOaVTJ5kjSaFvOYu1t_88tTSnnA/viewform?usp=sf_link"
   })
   window.close()
 }

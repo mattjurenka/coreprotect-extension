@@ -1,5 +1,5 @@
 {
-    "manifest_version": 3,
+    "manifest_version": 2,
     "name": "Core Protect",
     "version": "1.0",
 
@@ -9,7 +9,7 @@
         "48": "icons/icon-48.png"
     },
 
-    "action": {
+    "browser_action": {
         "default_icon": {
             "38": "icons/icon-48.png"
         },
@@ -20,22 +20,17 @@
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
-            "js": ["content_scripts/inject.js"],
-            "run_at": "document_start"
+            "js": ["content_scripts/inject.js"]
         }
     ],
     "background": {
-        "service_worker": "background_script.js"
+        "scripts": ["background_script.js"]
     },
-    "permissions": ["webRequest", "scripting", "tabs"],
-    "host_permissions": [
-      "<all_urls>"
-    ],
-    "web_accessible_resources" : [
-      {
-        "resources": ["content_scripts/*"],
-        "matches": ["<all_urls>"]
-      }
-    ]
+    "applications": {
+        "gecko": {
+            "id": "extension@matthewjurenka.com"
+        }
+    },
+    "permissions": ["<all_urls>", "webRequest"]
 }
 
