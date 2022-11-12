@@ -6,17 +6,19 @@ const contract_data_map = {}
 const { low, medium, high } = { low: "Low", medium: "Medium", high: "High"}
 
 let state_diff = {}
+let balance_diff = {}
 let call_trace = []
 let contracts_touched = new Set()
 
 let popup_port = null
 let last_requested_content_port = null
 let loading = false
+let resolved = false
 
 chrome.runtime.onConnect.addListener(port => {
   try {
     console.log("Registering port", port)
-    if (port.sender.url === chrome.runtime.getURL("popup/app.html")) {
+    if (port.sender.url.split("?")[0] === chrome.runtime.getURL("popup/app.html")) {
       port.onMessage.addListener(m => {
         console.log("Background Script receiving message of type", m.msg_type, "from popup", m)
         if (m.msg_type === "register_popup_port") {
@@ -30,11 +32,12 @@ chrome.runtime.onConnect.addListener(port => {
           popup_port = port
           popup_port.postMessage({
             msg_type: "update_transfers",
-            state_diff, call_trace,
+            state_diff, call_trace, balance_diff,
             contracts_touched: Array.from(contracts_touched),
-            contract_data_map, loading
+            contract_data_map, loading, resolved
           })
         } else if (m.msg_type === "respond_to_approve_request") {
+          resolved = true
           last_requested_content_port.postMessage({
             msg_type: "respond_to_approve_request", status: m.status
           })
@@ -47,11 +50,12 @@ chrome.runtime.onConnect.addListener(port => {
         console.log("Background Script receiving message of type", m.msg_type, "from page", m)
         if (m.msg_type === "simulate_transaction") {
           loading = true
+          resolved = false
           last_requested_content_port = port
 
           const url = chrome.runtime.getURL("popup/app.html")
           chrome.windows.create({
-            url, type: "popup", height: 620, width: 468
+            url: url + "?floating=true", type: "popup", height: 620, width: 468
           })
 
           await simulate_transaction(m.from, m.to, m.input, m.value)
@@ -59,11 +63,11 @@ chrome.runtime.onConnect.addListener(port => {
           loading = false
           popup_port.postMessage({
             msg_type: "update_transfers",
-            state_diff,
+            state_diff, balance_diff,
             call_trace,
             contracts_touched: Array.from(contracts_touched),
             contract_data_map,
-            loading
+            loading, resolved
           })
         }
       })
@@ -93,9 +97,9 @@ const simulate_transaction = async (from, to, input, value) => {
         const dirty = cur.raw[0].dirty
         const key = cur.raw[0].key
         if (address in acc) {
-          acc[address].push([key, original, dirty])
+          acc[address].push(["memory", key, original, dirty])
         } else {
-          acc[address] = [[key, original, dirty]]
+          acc[address] = [["memory", key, original, dirty]]
         }
         return acc
       }, {})
@@ -111,6 +115,18 @@ const simulate_transaction = async (from, to, input, value) => {
       ]
     }
     call_trace = recurse_trace(returned_trace)
+
+    json.transaction.transaction_info.balance_diff
+      .filter(diff => !diff.is_miner)
+      .forEach(({address, dirty, is_miner, original}) => {
+        address = address.toLowerCase()
+        if (address in state_diff) {
+          state_diff[address].unshift(["balance", original, dirty])
+        } else {
+          state_diff[address] = [["balance", original, dirty]]
+        }
+      })
+
   } catch (err) {
     console.error(err)
   }

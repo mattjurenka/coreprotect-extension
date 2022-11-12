@@ -6,17 +6,29 @@
     <script defer src="load_data.js"></script>
     <style>
       .overlay {
-        display: flex;
-        flex-direction: column;
-        width: 420px;
-        height: 550px;
         position: absolute;
         background: white;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
         transform: translate(0, -1rem);
-        padding: 1rem;
       }
-      #tos-overlay: {
+      .overlay.fixed {
+        transform: translate(0, -1rem);
+      }
+      #background {
+        min-height: 30rem;
+        height: calc(100vh - 4rem);
+      }
+      #tos-overlay {
         z-index: 10;
+      }
+      #tos-overlay > div {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
       }
       .overlay-hidden {
         display: none !important;
@@ -31,44 +43,61 @@
       #do-you-accept {
         margin-top: auto;
       }
+      .ml {
+        margin-left: 0.7rem;
+      }
+      .scroll-x {
+        overflow-x: scroll;
+      }
+      .scroll-y {
+        overflow-y: scroll;
+      }
+      #transfers {
+        min-height: 0;
+      }
+      #action-bar-hr {
+        margin-top: 0.5rem;
+      }
     </style>
   </head>
   <body>
-    <div id="tos-overlay" class="overlay">
-      <h1 id="title">Welcome to Core Protect</h1>
-      <p>To use this extension, please acknowledge the following terms and conditions of using this service:</p>
-      <div class="ack-container">
-        <input type="checkbox" id="check1">
-        <p>
-          This product is in beta, so information may not be 100% accurate.
+    <div id="tos-overlay" class="overlay fixed">
+      <div>
+        <h1 id="title">Welcome to Core Protect</h1>
+        <p>To use this extension, please acknowledge the following terms and conditions of using this service:</p>
+        <div class="ack-container">
+          <input type="checkbox" id="check1">
+          <p>
+            This product is in beta, so information may not be 100% accurate.
+          </p>
+        </div>
+        <div class="ack-container">
+          <input type="checkbox" id="check2">
+          <p>
+            Information provided by this product does not consitute an endorsement,
+            audit, or approval of any service, product, or financial instrument.
+          </p>
+        </div>
+        <div class="ack-container">
+          <input type="checkbox" id="check3">
+          <p>
+            You should use this product as a screening and research tool to verify
+            for yourself if the transaction is doing what you think it will. We cannot definitively tell you
+            whether or not you are getting scammed, and accept no responsibility for any loss of funds while
+            using this product.
+          </p>
+        </div>
+        <p id="do-you-accept">
+          Do you accept these terms and conditions?
         </p>
-      </div>
-      <div class="ack-container">
-        <input type="checkbox" id="check2">
-        <p>
-          Information provided by this product does not consitute an endorsement,
-          audit, or approval of any service, product, or financial instrument.
-        </p>
-      </div>
-      <div class="ack-container">
-        <input type="checkbox" id="check3">
-        <p>
-          You should use this product as a screening and research tool to verify
-          for yourself if the transaction is doing what you think it will. We cannot definitively tell you
-          whether or not you are getting scammed, and accept no responsibility for any loss of funds while
-          using this product.
-        </p>
-      </div>
-      <p id="do-you-accept">
-        Do you accept these terms and conditions?
-      </p>
-      <div class="action-bar">
-        <a id="agree" class="button filled">Yes</a>
-        <a id="disagree" class="button">No</a>
+        <div class="action-bar">
+          <a id="agree" class="button filled">Yes</a>
+          <a id="disagree" class="button">No</a>
+        </div>
       </div>
     </div>
-    <div id="background">
-      <h1 id="title">Review Transaction</h1>
+    <div id="background" class="fixed">
+      <h1 id="title">Review<span class="ml">Transaction</span></h1>
       <p id="subtitle">We detected the following effects:</p>
       <div class="hr"></div>
       <div id="noeffects">
@@ -89,7 +118,7 @@
           <div><a id="state_diff_tab">State Diff</a></div>
         </div>
         <div class="hr"></div>
-        <div id="dataview">
+        <div id="dataview" class="fixed scroll-y">
           <div id="reputation"></div>
           <div id="call_trace"></div>
           <div id="state_diff"></div>

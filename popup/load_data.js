@@ -14,6 +14,12 @@ if (localStorage.getItem("agreed_tos") === "true") {
   document.getElementById("tos-overlay").classList.add("overlay-hidden")
 }
 
+if (new URLSearchParams(window?.location?.search).has("floating")) {
+  document.getElementById("background").classList.remove("fixed")
+  document.getElementById("tos-overlay").classList.remove("fixed")
+  document.getElementById("dataview").classList.remove("fixed")
+}
+
 let contract_data = {}
 
 let central_port = chrome.runtime.connect();
@@ -24,6 +30,13 @@ central_port.onMessage.addListener(m => {
     set_transfers(m.state_diff, m.loading)
     populate_trace(m.call_trace, m.contract_data_map)
     populate_reputation(m.contracts_touched)
+
+    if (m.resolved) {
+      document.getElementById("action-bar").classList.add("hidden")
+      document.getElementById("action-bar-hr").classList.add("hidden")
+      document.getElementById("action-bar-confirm").classList.add("hidden")
+    }
+
   } else if (m.msg_type === "close_window") {
     window.close()
   }
@@ -37,7 +50,7 @@ const scam_emoji_map = {
 
 const NO_EFFECTS_EL = document.getElementById("noeffects")
 const EFFECTS_EL = document.getElementById("transfers")
-EFFECTS_EL.hidden = true
+EFFECTS_EL.classList.add("hidden")
 
 const STATE_DIFF_EL = document.getElementById("state_diff")
 const CALL_TRACE_EL = document.getElementById("call_trace")
@@ -51,20 +64,32 @@ const REPUTATION_TAB_EL = document.getElementById("reputation_tab")
 
 {
   [
-    [STATE_DIFF_EL, STATE_DIFF_TAB_EL],
-    [CALL_TRACE_EL, CALL_TRACE_TAB_EL],
-    [REPUTATION_EL, REPUTATION_TAB_EL]
-  ].forEach(([view_el, tab_el]) => {
+    [STATE_DIFF_EL, STATE_DIFF_TAB_EL, "y"],
+    [CALL_TRACE_EL, CALL_TRACE_TAB_EL, "both"],
+    [REPUTATION_EL, REPUTATION_TAB_EL, "y"]
+  ].forEach(([view_el, tab_el, scroll]) => {
     tab_el.onclick = () => {
       STATE_DIFF_TAB_EL.classList.remove("selected")
       CALL_TRACE_TAB_EL.classList.remove("selected")
       REPUTATION_TAB_EL.classList.remove("selected")
       tab_el.classList.add("selected")
-
+      
       STATE_DIFF_EL.hidden = true
       CALL_TRACE_EL.hidden = true
       REPUTATION_EL.hidden = true
       view_el.hidden = false
+
+      const dataview = document.getElementById("dataview")
+      dataview.classList.remove("scroll-x")
+      dataview.classList.remove("scroll-y")
+      if (scroll === "x") {
+        dataview.classList.add("scroll-x")
+      } else if (scroll === "y") {
+        dataview.classList.add("scroll-y")
+      } else {
+        dataview.classList.add("scroll-x")
+        dataview.classList.add("scroll-y")
+      }
     }
   })
 }
@@ -77,6 +102,14 @@ const get_shorten_hex_el = (str) => {
   p.textContent = shorten_hex(str)
   p.title = str
   return p
+}
+const format_wei = wei => {
+  const padded = wei.padStart(18, "0")
+	const split_point = padded.length - 18
+  const before_zero = padded.substr(0, split_point)
+  const after = padded.substr(split_point, padded.length)
+	const prefix = before_zero || "0"
+  return (Number(prefix).toLocaleString() + "." + after).substring(0, 15)
 }
 
 
@@ -103,37 +136,54 @@ const get_state_diff_el = (contract, state_diff) => {
   const container = document.createElement("div")
 
   const state_diff_display = document.createElement("div")
-  const diffs = state_diff.map(([state_address, old_val, new_val]) => {
-    const state_address_display = document.createElement("p")
-    state_address_display.classList.add("contract-title")
-    state_address_display.textContent = `Memory @  ${strip_zeros(state_address)}`
+  const diffs = state_diff.map((diff) => {
+    if (diff[0] === "memory") {
+      const [_, state_address, old_val, new_val] = diff
 
-    const now_display = document.createElement("p")
-    now_display.textContent = `Was ${strip_zeros(old_val)}`
+      const modify_address_container = document.createElement("div")
+      modify_address_container.style.display = "grid"
+      modify_address_container.style.gridTemplateColumns = "1fr 1fr"
+      modify_address_container.style.marginBottom = "0.5rem"
+      modify_address_container.replaceChildren(...([
+        ["Memory @", state_address],
+        ["Was", old_val],
+        ["Will Be", new_val]
+      ].map(([text, val], i) => {
+        const p = document.createElement("p")
+        p.textContent = text
 
-    const will_be_display = document.createElement("p")
-    will_be_display.textContent = `Changed to ${strip_zeros(new_val)}`
+        const val_el = get_shorten_hex_el(val)
+        val_el.style.textAlign = "right"
+        val_el.style.marginRight = "1rem"
 
-    const modify_address_container = document.createElement("div")
-    modify_address_container.style.display = "grid"
-    modify_address_container.style.gridTemplateColumns = "1fr 1fr"
-    modify_address_container.style.marginBottom = "0.5rem"
-    modify_address_container.replaceChildren(...([
-      ["Memory @", state_address],
-      ["Was", old_val],
-      ["Will Be", new_val]
-    ].map(([text, val], i) => {
-      const p = document.createElement("p")
-      p.textContent = text
+        return [p, val_el]
+      }).flat()))
 
-      const val_el = get_shorten_hex_el(val)
-      val_el.style.textAlign = "right"
-      val_el.style.marginRight = "1rem"
+      return modify_address_container
+    } else {
+      const [_, old_val, new_val] = diff
 
-      return [p, val_el]
-    }).flat()))
+      const modify_address_container = document.createElement("div")
+      modify_address_container.style.display = "grid"
+      modify_address_container.style.gridTemplateColumns = "1fr 1fr"
+      modify_address_container.style.marginBottom = "0.5rem"
+      modify_address_container.replaceChildren(...([
+        ["ETH Balance Was", format_wei(old_val)],
+        ["Will Be", format_wei(new_val)]
+      ].map(([text, val], i) => {
+        const p = document.createElement("p")
+        p.textContent = text
 
-    return modify_address_container
+        const val_el = document.createElement("p")
+        val_el.textContent = val
+        val_el.style.textAlign = "right"
+        val_el.style.marginRight = "1rem"
+
+        return [p, val_el]
+      }).flat()))
+
+      return modify_address_container
+    }
   })
   state_diff_display.replaceChildren(...diffs);
   container.replaceChildren(get_etherscan_link(contract), ...diffs)
@@ -151,7 +201,7 @@ const set_transfers = (state_diff_by_contract, loading) => {
     document.getElementById("action-bar").classList.remove("hidden")
     document.getElementById("action-bar-hr").classList.remove("hidden")
     document.getElementById("action-bar-confirm").classList.remove("hidden")
-    EFFECTS_EL.hidden = false
+    EFFECTS_EL.classList.remove("hidden")
     STATE_DIFF_EL.replaceChildren(...(
       Object.entries(state_diff_by_contract)
         .map(([contract_address, contract_diff]) =>

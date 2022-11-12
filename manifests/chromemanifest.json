@@ -3,7 +3,7 @@
     "name": "Core Protect",
     "version": "1.0",
 
-    "description": "Core Protect",
+    "description": "Pre-screen Ethereum transactions to detect scams before they happen.",
 
     "icons": {
         "48": "icons/icon-48.png"
