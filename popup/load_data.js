@@ -259,10 +259,12 @@ const populate_reputation = (contracts_touched) => {
 
     const contract_title = document.createElement("p")
     contract_title.textContent = "Contract"
+    contract_title.style.fontWeight = "bold"
     contract_title.onclick = () => console.log(contracts_touched, Array.from(contracts_touched))
 
     const score_title = document.createElement("p")
     score_title.textContent = "Reputation"
+    score_title.style.fontWeight = "bold"
     score_title.classList.add("rep_score")
 
     title_bar.replaceChildren(contract_title, score_title)
