@@ -27,7 +27,6 @@
     "background": {
         "service_worker": "background_script.js"
     },
-    "permissions": ["webRequest", "scripting", "tabs"],
     "host_permissions": [
       "<all_urls>"
     ],

@@ -443,7 +443,7 @@ REPORT_EL.onclick = () => {
   })
   central_port.postMessage({
     msg_type: "open_tab",
-    url: "https://docs.google.com/forms/d/e/1FAIpQLSfVcT1HOjkgtXIWidYD7ILaOaVTJ5kjSaFvOYu1t_88tTSnnA/viewform?usp=sf_link"
+    url: "https://forms.gle/Csc2hc7xJdg6au5KA"
   })
   window.close()
 }
