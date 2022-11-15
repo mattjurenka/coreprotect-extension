@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build-chrome": "cp ./manifests/chromemanifest.json manifest.json",
-    "build-firefox": "cp ./manifests/firefoxmanifest.json manifest.json"
+    "build-chrome": "cp ./manifests/chromemanifest.json manifest.json && npm run build",
+    "build-firefox": "cp ./manifests/firefoxmanifest.json manifest.json && npm run build",
+    "build": "rm -rf ./dist/* && mkdir dist && zip -r dist/coreprotect.zip background_script.js content_scripts/* icons/* manifest.json popup/*"
   },
   "repository": {
     "type": "git",
