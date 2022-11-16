@@ -1,6 +1,4 @@
-let port = chrome.runtime.connect();
-
-port.onMessage.addListener(m => {
+chrome.runtime.onMessage.addListener(m => {
   console.log("Content Script receiving message of type", m.msg_type, "from Background Script", m)
   if (m.msg_type === "respond_to_approve_request") {
     window.postMessage({
@@ -12,13 +10,13 @@ port.onMessage.addListener(m => {
 
 window.addEventListener("message", event => {
   if (event?.data?.msg_type === "simulate_transaction") {
-    port.postMessage(event.data)
+    chrome.runtime.sendMessage(event.data).catch(console.log)
   }
 })
 
 var s = document.createElement('script');
 s.src = chrome.runtime.getURL('content_scripts/to_inject.js');
 s.onload = function() {
-    this.remove();
+    (this as any).remove();
 };
 (document.head || document.documentElement).appendChild(s);

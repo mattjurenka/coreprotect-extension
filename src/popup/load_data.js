@@ -22,26 +22,28 @@ if (new URLSearchParams(window?.location?.search).has("floating")) {
 
 let contract_data = {}
 
-let central_port = chrome.runtime.connect();
-central_port.onMessage.addListener(m => {
+const update_transfers = (m) => {
+  contract_data = m.contract_data_map
+  set_transfers(m.state_diff, m.loading)
+  populate_trace(m.call_trace, m.contract_data_map)
+  populate_reputation(m.contracts_touched)
+
+  if (m.resolved) {
+    document.getElementById("action-bar").classList.add("hidden")
+    document.getElementById("action-bar-hr").classList.add("hidden")
+    document.getElementById("action-bar-confirm").classList.add("hidden")
+  }
+}
+
+chrome.runtime.onMessage.addListener(m => {
   console.log("Popup receiving message of type", m.msg_type, m)
   if (m.msg_type === "update_transfers") {
-    contract_data = m.contract_data_map
-    set_transfers(m.state_diff, m.loading)
-    populate_trace(m.call_trace, m.contract_data_map)
-    populate_reputation(m.contracts_touched)
-
-    if (m.resolved) {
-      document.getElementById("action-bar").classList.add("hidden")
-      document.getElementById("action-bar-hr").classList.add("hidden")
-      document.getElementById("action-bar-confirm").classList.add("hidden")
-    }
-
+    update_transfers(m)
   } else if (m.msg_type === "close_window") {
     window.close()
   }
 })
-central_port.postMessage({ msg_type: "register_popup_port" })
+chrome.runtime.sendMessage({ msg_type: "register_popup_port" }).then(update_transfers)
 
 const scam_emoji_map = {
   "Low": "😨", "Neutral": "🙂", "High": "😀", "Unknown": "🤔"
@@ -124,7 +126,7 @@ const get_etherscan_link = address => {
       document.createTextNode(shorten_name(contract_name)) :
       shorten_hex(address)
   )
-  a.onclick = () => central_port.postMessage({msg_type: "open_tab", url})
+  a.onclick = () => chrome.runtime.sendMessage({msg_type: "open_tab", url})
   a.style.cursor = "pointer"
   a.title = address
 
@@ -327,7 +329,7 @@ const populate_reputation = (contracts_touched) => {
 
         const link_data = data => {
           const a = document.createElement("a")
-          a.onclick = () => central_port.postMessage({msg_type: "open_tab", url: data})
+          a.onclick = () => chrome.runtime.sendMessage({msg_type: "open_tab", url: data})
           a.title = data
           const href = data.replace(/https?:\/\/(www.)?/, "")
           a.textContent = href.length > 25 ? href.substring(0, 22) + "..." : href
@@ -423,25 +425,25 @@ const REJECT_EL = document.getElementById("reject")
 const REPORT_EL = document.getElementById("report")
 
 APPROVE_EL.onclick = () => {
-  central_port.postMessage({
+  chrome.runtime.sendMessage({
     msg_type: "respond_to_approve_request",
     status: "approved"
   })
   window.close()
 }
 REJECT_EL.onclick = () => {
-  central_port.postMessage({
+  chrome.runtime.sendMessage({
     msg_type: "respond_to_approve_request",
     status: "rejected"
   })
   window.close()
 }
 REPORT_EL.onclick = () => {
-  central_port.postMessage({
+  chrome.runtime.sendMessage({
     msg_type: "respond_to_approve_request",
     status: "reported"
   })
-  central_port.postMessage({
+  chrome.runtime.sendMessage({
     msg_type: "open_tab",
     url: "https://forms.gle/Csc2hc7xJdg6au5KA"
   })

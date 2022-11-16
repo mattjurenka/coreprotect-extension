@@ -25,7 +25,7 @@
         }
     ],
     "background": {
-        "scripts": ["background_script.js"]
+        "scripts": ["background.js"]
     },
     "permissions": ["webRequest", "scripting", "tabs"],
     "web_accessible_resources" : [

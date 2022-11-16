@@ -1,11 +1,11 @@
 {
   "name": "coreprotect-extension",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "scripts": {
-    "build-chrome": "cp ./manifests/chromemanifest.json manifest.json && npm run build",
-    "build-firefox": "cp ./manifests/firefoxmanifest.json manifest.json && npm run build",
-    "build": "rm -rf ./dist/* && mkdir dist && zip -r dist/coreprotect.zip background_script.js content_scripts/* icons/* manifest.json popup/*"
+    "build-chrome": "cp ./manifests/chromemanifest.json manifest.json && npm run webpack",
+    "build-firefox": "cp ./manifests/firefoxmanifest.json manifest.json && npm run webpack",
+    "webpack": "rm -rf ./dist/* && webpack --config webpack/webpack.config.js"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,13 @@
   "bugs": {
     "url": "https://github.com/mattjurenka/coreprotect-extension/issues"
   },
-  "homepage": "https://github.com/mattjurenka/coreprotect-extension#readme"
+  "homepage": "https://github.com/mattjurenka/coreprotect-extension#readme",
+  "devDependencies": {
+    "@types/chrome": "^0.0.202",
+    "copy-webpack-plugin": "^11.0.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.9.3",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^4.10.0"
+  }
 }

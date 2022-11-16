@@ -7,9 +7,9 @@ window.addEventListener("message", event => {
 
 let times_checked = 0
 const intervalId = setInterval(() => {
-  if (window.ethereum?.request) {
-    const old_request = window.ethereum.request
-    window.ethereum.request = (requestArgs) => {
+  if ((window as any).ethereum?.request) {
+    const old_request = (window as any).ethereum.request;
+    ((window as any).ethereum.request as any) = (requestArgs: any) => {
       if (requestArgs.method === "eth_sendTransaction") {
         const { from, to, value, data } = requestArgs.params[0]
         window.postMessage({msg_type: "simulate_transaction", from, to, value, input: data})
@@ -19,7 +19,7 @@ const intervalId = setInterval(() => {
               clearInterval(check_approval_id);
               if (approval === "approved") {
                 approval = "requested"
-                resolve()
+                resolve(undefined)
               } else {
                 approval = "requested"
                 reject({
