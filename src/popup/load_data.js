@@ -37,13 +37,16 @@ const update_transfers = (m) => {
 
 chrome.runtime.onMessage.addListener(m => {
   console.log("Popup receiving message of type", m.msg_type, m)
+  if (!m?.msg_type) {
+    return false
+  }
   if (m.msg_type === "update_transfers") {
     update_transfers(m)
   } else if (m.msg_type === "close_window") {
     window.close()
   }
 })
-chrome.runtime.sendMessage({ msg_type: "register_popup_port" }).then(update_transfers)
+chrome.runtime.sendMessage({ msg_type: "register_popup_port" })
 
 const scam_emoji_map = {
   "Low": "😨", "Neutral": "🙂", "High": "😀", "Unknown": "🤔"
@@ -429,23 +432,20 @@ APPROVE_EL.onclick = () => {
     msg_type: "respond_to_approve_request",
     status: "approved"
   })
-  window.close()
 }
 REJECT_EL.onclick = () => {
   chrome.runtime.sendMessage({
     msg_type: "respond_to_approve_request",
     status: "rejected"
   })
-  window.close()
 }
 REPORT_EL.onclick = () => {
-  chrome.runtime.sendMessage({
-    msg_type: "respond_to_approve_request",
-    status: "reported"
-  })
   chrome.runtime.sendMessage({
     msg_type: "open_tab",
     url: "https://forms.gle/Csc2hc7xJdg6au5KA"
   })
-  window.close()
+  chrome.runtime.sendMessage({
+    msg_type: "respond_to_approve_request",
+    status: "reported"
+  })
 }

@@ -21,7 +21,7 @@ const [get_last_requested_id, set_last_requested_id] = get_storage_accessors<num
 const [get_loading, set_loading] = get_storage_accessors("loading", false)
 const [get_resolved, set_resolved] = get_storage_accessors("resolved", false)
 
-chrome.runtime.onMessage.addListener(async (m, sender, respond) => {
+chrome.runtime.onMessage.addListener((m, sender, respond) => {
   console.log("Background Script receiving message", m, "from popup", sender);
   (async () => {
     try{
@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener(async (m, sender, respond) => {
           }).catch(console.log)
         }
         await set_popup_id(sender.tab?.id)
-        respond({
+        chrome.runtime.sendMessage({
           msg_type: "update_transfers",
           state_diff: await get_state_diff(),
           call_trace: await get_call_trace(),
@@ -48,6 +48,13 @@ chrome.runtime.onMessage.addListener(async (m, sender, respond) => {
         if (last_requested_tab) {
           chrome.tabs.sendMessage(last_requested_tab, {
             msg_type: "respond_to_approve_request", status: m.status
+          }).catch(console.log)
+        }
+
+        const close_tab_id = await get_popup_id()
+        if (close_tab_id) {
+          chrome.tabs.sendMessage(close_tab_id, {
+            msg_type: "close_window"
           }).catch(console.log)
         }
       } else if (m.msg_type === "open_tab") {

@@ -1,0 +1,19 @@
+{
+    "name": "Core Protect",
+    "version": "1.1",
+    "description": "Pre-screen Ethereum transactions to detect scams before they happen.",
+    "icons": {
+        "16": "icons/logo-filled-16.png",
+        "32": "icons/logo-filled-32.png",
+        "48": "icons/logo-filled-48.png",
+        "96": "icons/logo-filled-96.png",
+        "128": "icons/logo-filled-128.png"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content_scripts/inject.js"],
+            "run_at": "document_start"
+        }
+    ]
+}
