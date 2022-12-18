@@ -1,8 +1,9 @@
+import browser from "webextension-polyfill"
+
 import { get_storage_accessors } from "./util"
 
 const SIMULATE_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/simulate/"
 const CONTRACT_DATA_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/get_contract_data/"
-
 
 type DataMap = { [address: string]: any }
 type ExternalCall = { from: string, to: string, input: string, value: string }
@@ -14,79 +15,68 @@ const [get_state_diff, set_state_diff] = get_storage_accessors<StateDiff>("state
 const [get_contracts_touched, set_contracts_touched] = get_storage_accessors<string[]>("contracts_touched", [])
 const [get_call_trace, set_call_trace] = get_storage_accessors<ExternalCall[]>("call_trace", [])
 
-const [get_popup_id, set_popup_id] = get_storage_accessors<number | undefined>("popup_id", undefined)
 const [get_last_requested_id, set_last_requested_id] = get_storage_accessors<number | undefined>("last_requested_id", undefined)
 
 
 const [get_loading, set_loading] = get_storage_accessors("loading", false)
 const [get_resolved, set_resolved] = get_storage_accessors("resolved", false)
 
-chrome.runtime.onMessage.addListener((m, sender, respond) => {
+browser.runtime.onMessage.addListener(async (m, sender) => {
   console.log("Background Script receiving message", m, "from popup", sender);
-  (async () => {
-    try{
-      if (m.msg_type === "register_popup_port") {
-        const close_tab_id = await get_popup_id()
-        if (close_tab_id) {
-          chrome.tabs.sendMessage(close_tab_id, {
-            msg_type: "close_window"
-          }).catch(console.log)
-        }
-        await set_popup_id(sender.tab?.id)
-        chrome.runtime.sendMessage({
-          msg_type: "update_transfers",
-          state_diff: await get_state_diff(),
-          call_trace: await get_call_trace(),
-          contracts_touched: await get_contracts_touched(),
-          contract_data_map: await get_data_map(),
-          loading: await get_loading(),
-          resolved: await get_resolved(),
-        })
-      } else if (m.msg_type === "respond_to_approve_request") {
-        await set_resolved(true)
-        const last_requested_tab = await get_last_requested_id()
-        if (last_requested_tab) {
-          chrome.tabs.sendMessage(last_requested_tab, {
-            msg_type: "respond_to_approve_request", status: m.status
-          }).catch(console.log)
-        }
-
-        const close_tab_id = await get_popup_id()
-        if (close_tab_id) {
-          chrome.tabs.sendMessage(close_tab_id, {
-            msg_type: "close_window"
-          }).catch(console.log)
-        }
-      } else if (m.msg_type === "open_tab") {
-        chrome.tabs.create({url: m.url})
-      } else if (m.msg_type === "simulate_transaction") {
-        await set_loading(true)
-        await set_resolved(false)
-        await set_last_requested_id(sender.tab?.id)
-
-        const url = chrome.runtime.getURL("popup/app.html")
-        chrome.windows.create({
-          url: url + "?floating=true", type: "popup", height: 620, width: 468
-        })
-
-        await simulate_transaction(m.from, m.to, m.input, m.value)
-        await update_contract_data_map(await get_contracts_touched())
-        await set_loading(false)
-        await chrome.tabs.sendMessage(await get_popup_id() || 0, {
-          msg_type: "update_transfers",
-          state_diff: await get_state_diff(),
-          call_trace: await get_call_trace(),
-          contracts_touched: await get_contracts_touched(),
-          contract_data_map: await get_data_map(),
-          loading: await get_loading(),
-          resolved: await get_resolved(),
+  try{
+    if (m.msg_type === "register_popup_port") {
+      browser.runtime.sendMessage({
+        msg_type: "close_window",
+        keep_open: m.keep_open
+      }).catch(console.log)
+      browser.runtime.sendMessage({
+        msg_type: "update_transfers",
+        state_diff: await get_state_diff(),
+        call_trace: await get_call_trace(),
+        contracts_touched: await get_contracts_touched(),
+        contract_data_map: await get_data_map(),
+        loading: await get_loading(),
+        resolved: await get_resolved(),
+      })
+    } else if (m.msg_type === "respond_to_approve_request") {
+      await set_resolved(true)
+      const last_requested_tab = await get_last_requested_id()
+      if (last_requested_tab) {
+        browser.tabs.sendMessage(last_requested_tab, {
+          msg_type: "respond_to_approve_request", status: m.status
         }).catch(console.log)
       }
-    } catch (err) {
-      console.log(err)
+      browser.runtime.sendMessage({
+        msg_type: "close_window"
+      }).catch(console.log)
+    } else if (m.msg_type === "open_tab") {
+      browser.tabs.create({url: m.url})
+    } else if (m.msg_type === "simulate_transaction") {
+      await set_loading(true)
+      await set_resolved(false)
+      await set_last_requested_id(sender.tab?.id)
+
+      const url = browser.runtime.getURL("popup/app.html")
+      browser.windows.create({
+        url: url + "?floating=true", type: "popup", height: 620, width: 468
+      })
+
+      await simulate_transaction(m.from, m.to, m.input, m.value)
+      await update_contract_data_map(await get_contracts_touched())
+      await set_loading(false)
+      await browser.runtime.sendMessage({
+        msg_type: "update_transfers",
+        state_diff: await get_state_diff(),
+        call_trace: await get_call_trace(),
+        contracts_touched: await get_contracts_touched(),
+        contract_data_map: await get_data_map(),
+        loading: await get_loading(),
+        resolved: await get_resolved(),
+      }).catch(console.log)
     }
-  })()
-  return true
+  } catch (err) {
+    console.log(err)
+  }
 })
 
 const simulate_transaction = async (from: any, to: any, input: any, value: any) => {

@@ -14,7 +14,9 @@ if (localStorage.getItem("agreed_tos") === "true") {
   document.getElementById("tos-overlay").classList.add("overlay-hidden")
 }
 
-if (new URLSearchParams(window?.location?.search).has("floating")) {
+const window_type = new URLSearchParams(window?.location?.search).has("floating") ? "floating" : "popup"
+
+if (window_type === "floating") {
   document.getElementById("background").classList.remove("fixed")
   document.getElementById("tos-overlay").classList.remove("fixed")
   document.getElementById("dataview").classList.remove("fixed")
@@ -43,10 +45,12 @@ chrome.runtime.onMessage.addListener(m => {
   if (m.msg_type === "update_transfers") {
     update_transfers(m)
   } else if (m.msg_type === "close_window") {
-    window.close()
+    if (m.keep_open !== window_type) {
+      window.close()
+    }
   }
 })
-chrome.runtime.sendMessage({ msg_type: "register_popup_port" })
+chrome.runtime.sendMessage({ msg_type: "register_popup_port", keep_open: window_type })
 
 const scam_emoji_map = {
   "Low": "😨", "Neutral": "🙂", "High": "😀", "Unknown": "🤔"

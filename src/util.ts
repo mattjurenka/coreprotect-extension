@@ -1,3 +1,5 @@
+import browser from "webextension-polyfill"
+
 const get_storage_accessors = <T>(key_name: string, def: T): [() => Promise<T>, (val: T) => Promise<void>] => {
   let last_queued_op: Promise<any> = Promise.resolve();
   let state_status: ["init" | "uninit", T] = ["uninit", def];
@@ -5,7 +7,7 @@ const get_storage_accessors = <T>(key_name: string, def: T): [() => Promise<T>, 
     async () => {
       last_queued_op = last_queued_op.then(async () => {
         if (state_status[0] === "uninit") {
-          const found = (await chrome.storage.local.get(key_name))[key_name]
+          const found = (await browser.storage.local.get(key_name))[key_name]
           state_status = [
             "init",
             found !== undefined ?
@@ -22,7 +24,7 @@ const get_storage_accessors = <T>(key_name: string, def: T): [() => Promise<T>, 
       last_queued_op = last_queued_op.then(() => {
         //console.log("Setting", key_name, "to", val)
         state_status[1] = val
-        return chrome.storage.local.set({ [key_name]: JSON.stringify(val) })
+        return browser.storage.local.set({ [key_name]: JSON.stringify(val) })
       })
     }
   ]
