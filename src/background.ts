@@ -1,4 +1,5 @@
 import browser from "webextension-polyfill"
+import { get_effects } from "./calculate_effects"
 
 import { get_storage_accessors } from "./util"
 
@@ -16,7 +17,6 @@ const [get_contracts_touched, set_contracts_touched] = get_storage_accessors<str
 const [get_call_trace, set_call_trace] = get_storage_accessors<ExternalCall[]>("call_trace", [])
 
 const [get_last_requested_id, set_last_requested_id] = get_storage_accessors<number | undefined>("last_requested_id", undefined)
-
 
 const [get_loading, set_loading] = get_storage_accessors("loading", false)
 const [get_resolved, set_resolved] = get_storage_accessors("resolved", false)
@@ -61,8 +61,9 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         url: url + "?floating=true", type: "popup", height: 620, width: 468
       })
 
-      await simulate_transaction(m.from, m.to, m.input, m.value)
+      const trace = await simulate_transaction(m.from, m.to, m.input, m.value)
       await update_contract_data_map(await get_contracts_touched())
+      get_effects(trace, await get_data_map())
       await set_loading(false)
       await browser.runtime.sendMessage({
         msg_type: "update_transfers",
@@ -79,7 +80,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
   }
 })
 
-const simulate_transaction = async (from: any, to: any, input: any, value: any) => {
+const simulate_transaction = async (from: any, to: any, input: any, value: any): Promise<[string, string, string][]> => {
   try {
     const res = await fetch(SIMULATE_URL, {
       method: "POST",
@@ -132,9 +133,11 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any) 
         }
       })
     await set_state_diff(state_diff)
+    return json.transaction.call_trace.map((call: any) => [call.from, call.to, call.input])
   } catch (err) {
     console.error(err)
   }
+  return []
 }
 
 const update_contract_data_map = async (contracts: any) => {

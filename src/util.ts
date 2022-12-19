@@ -15,21 +15,18 @@ const get_storage_accessors = <T>(key_name: string, def: T): [() => Promise<T>, 
               state_status[1]
           ]
         }
-        //console.log("Getting", key_name, "found", state_status[1])
         return state_status[1]
       })
       return last_queued_op
     },
     async (val: T) => {
       last_queued_op = last_queued_op.then(() => {
-        //console.log("Setting", key_name, "to", val)
         state_status[1] = val
         return browser.storage.local.set({ [key_name]: JSON.stringify(val) })
       })
     }
   ]
 }
-
 
 export {
   get_storage_accessors,

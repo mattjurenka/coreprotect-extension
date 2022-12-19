@@ -48,5 +48,4 @@
       <Statediff />
     {/if}
   </div>
-  <Seperator />
 </div>
