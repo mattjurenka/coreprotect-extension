@@ -3,12 +3,14 @@
 
   import { effects } from "../../stores";
   import Transfer from "./erc20/Transfer.svelte";
+  import Approve from "./erc20/Approve.svelte";
+  import TransferFrom from "./erc20/TransferFrom.svelte";
 
   const effects_by_fn_sig = {
     "ERC20": {
       "transfer(address,uint256)": Transfer,
-      "approve(address,uint256)": Transfer,
-      "transferFrom(address,uint256)": Transfer,
+      "approve(address,uint256)": Approve,
+      "transferFrom(address,uint256)": TransferFrom,
       "increaseAllowance(address,uint256)": Transfer,
       "decreaseAllowance(address,uint256)": Transfer,
       "mint(address,uint256)": Transfer,

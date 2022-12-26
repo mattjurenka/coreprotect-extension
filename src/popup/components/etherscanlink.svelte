@@ -5,8 +5,8 @@
 
   export let contract_hex = ""
   $: contract_data = $contract_data_map[contract_hex]
-  $: contract_name = "uniswap_token_info" in contract_data ?
-    `$${contract_data["uniswap_token_info"].symbol}` : contract_data.contract_name
+  $: contract_name = contract_data?.uniswap_token_info ?
+    `$${contract_data.uniswap_token_info.symbol}` : contract_data?.contract_name
 
   const open_etherscan = () => {
     const url = `https://etherscan.io/address/${contract_hex}`

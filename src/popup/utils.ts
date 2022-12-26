@@ -1,3 +1,5 @@
+import Decimal from "decimal.js"
+
 export const clamp_str_to = (n: number) => (str: string) =>
   str.length > n ?
     str.substring(0, n - 3) + "..." :
@@ -31,7 +33,7 @@ export const format_bignum_from_hex = (wei: string, decimals: number) => {
 
 export const format_wei_from_hex = (wei: string) => format_bignum_from_hex(wei, 18)
 
-export const calculate_dollar_value = (
+export const calculate_dollar_value2 = (
   formatted_tokens_transferred: string, currency: string, currency_map: {[currency: string]: string | undefined},
   eth_per_token: string | undefined
 ): number | undefined => {
@@ -43,3 +45,17 @@ export const calculate_dollar_value = (
   const num_eth_per_token = Number(eth_per_token)
   return tokens_transferred * num_eth_per_token * Number(currency_per_eth)
 }
+
+export const calculate_dollar_value = (
+  tokens_transferred: Decimal, currency: string,
+  currency_map: {[currency: string]: string | undefined}, eth_per_token: Decimal
+): Decimal | undefined => {
+  const currency_per_eth = currency_map[currency]
+  if (!currency_per_eth) {
+    return undefined
+  }
+  return tokens_transferred.mul(new Decimal(currency_per_eth)).mul(eth_per_token)
+}
+
+export const add_commas = (number_str: string) => number_str.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
+export const format_decimal = (n: Decimal) => add_commas(n.toSD(8).toString())

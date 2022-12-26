@@ -1,12 +1,16 @@
 <script>
   import Etherscanlink from "../../etherscanlink.svelte";
-  import { calculate_dollar_value, format_bignum_from_hex } from "../../../utils";
+  import { calculate_dollar_value, format_decimal } from "../../../utils";
   import { contract_data_map, eth_price } from "../../../stores"
-import HelpIcon from "../../HelpIcon.svelte";
+  import HelpIcon from "../../HelpIcon.svelte";
+  import {Decimal} from "decimal.js"
 
   export let contract;
   export let args;
   export let caller;
+
+  const [to, raw_value] = args
+  const value = new Decimal("0x" + raw_value)
 
   let help_expanded = false
   const toggle_expanded = () => {
@@ -14,8 +18,8 @@ import HelpIcon from "../../HelpIcon.svelte";
   }
 
   $: contract_data = $contract_data_map[contract]
-  $: tokens_transferred = format_bignum_from_hex(args[1], contract_data?.uniswap_token_info?.decimals || 18)
-  $: eth_per_token = contract_data?.uniswap_token_info?.derivedETH
+  $: tokens_transferred = (new Decimal(10)).pow(new Decimal(contract_data?.uniswap_token_info?.decimals || 18).negated()).mul(value)
+  $: eth_per_token = new Decimal(contract_data?.uniswap_token_info?.derivedETH || 0)
   $: dollars_transferred = calculate_dollar_value(tokens_transferred, "USD", $eth_price, eth_per_token)
 </script>
 
@@ -34,14 +38,16 @@ import HelpIcon from "../../HelpIcon.svelte";
   {#if help_expanded}
     <div class="my-1 p-2 bg-lightgrey">
       <p class="font-jetbrains text-base">
-        This transaction includes a transfer of {tokens_transferred} coins of <Etherscanlink contract_hex={contract}/>
-        from <Etherscanlink contract_hex={caller} /> to <Etherscanlink contract_hex={args[0]} />.
-        At current Uniswap price, this transfer represents a value of {dollars_transferred} in USD.
+        This transaction includes a transfer of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>
+        from <Etherscanlink contract_hex={caller} /> to <Etherscanlink contract_hex={to} />.
+        At current Uniswap price, this transfer represents a value of {format_decimal(dollars_transferred)} in USD.
       </p>
     </div>
   {/if}
   <p class="text-base font-jetbrains mb-1">From: <Etherscanlink contract_hex={caller} /></p>
-  <p class="text-base font-jetbrains mb-1">To: <Etherscanlink contract_hex={args[0]} /></p>
-  <p class="text-base font-jetbrains mb-1">Amount: {tokens_transferred}</p>
-  <p class="text-base font-jetbrains">USD Value: {dollars_transferred}</p>
+  <p class="text-base font-jetbrains mb-1">To: <Etherscanlink contract_hex={to} /></p>
+  <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(tokens_transferred)}</p>
+  {#if dollars_transferred}
+    <p class="text-base font-jetbrains">USD Value: {format_decimal(dollars_transferred)}</p>
+  {/if}
 </div>
