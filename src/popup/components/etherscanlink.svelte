@@ -1,10 +1,12 @@
 <script>
   import browser from "webextension-polyfill";
-  import { contract_data_map } from "../stores"
+  import { contract_data_map, your_address } from "../stores"
   import { clamp_str_to, clamp_hex } from "../utils";
 
   export let contract_hex = ""
-  $: contract_name = $contract_data_map[contract_hex]?.contract_name
+  $: contract_data = $contract_data_map[contract_hex]
+  $: contract_name = "uniswap_token_info" in contract_data ?
+    `$${contract_data["uniswap_token_info"].symbol}` : contract_data.contract_name
 
   const open_etherscan = () => {
     const url = `https://etherscan.io/address/${contract_hex}`
@@ -22,5 +24,8 @@
     {clamp_str_to(30)(contract_name)}
   {:else}
     {clamp_hex(contract_hex)}
+  {/if}
+  {#if $your_address === contract_hex}
+    {" (You)"}
   {/if}
 </a>

@@ -1,25 +1,13 @@
 import browser from "webextension-polyfill"
-import { get_effects } from "./calculate_effects"
+import { calculate_effects } from "./calculate_effects"
+import { fetch_eth_price } from "./eth_price"
 
-import { get_storage_accessors } from "./util"
+import { get_loading, get_state_diff, get_call_trace, get_contracts_touched, get_data_map, get_resolved, get_effects, get_last_requested_id, get_eth_price } from "./stores"
+import { set_loading, set_state_diff, set_call_trace, set_contracts_touched, set_data_map, set_resolved, set_effects, set_last_requested_id, set_eth_price} from "./stores"
+import { ExternalCall } from "./stores"
 
 const SIMULATE_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/simulate/"
 const CONTRACT_DATA_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/get_contract_data/"
-
-type DataMap = { [address: string]: any }
-type ExternalCall = { from: string, to: string, input: string, value: string }
-type DiffType = ["memory", string, string, string] | ["balance", string, string]
-type StateDiff = { [address: string]: DiffType[] }
-
-const [get_data_map, set_data_map] = get_storage_accessors<DataMap>("data_map", {})
-const [get_state_diff, set_state_diff] = get_storage_accessors<StateDiff>("state_diff", {})
-const [get_contracts_touched, set_contracts_touched] = get_storage_accessors<string[]>("contracts_touched", [])
-const [get_call_trace, set_call_trace] = get_storage_accessors<ExternalCall[]>("call_trace", [])
-
-const [get_last_requested_id, set_last_requested_id] = get_storage_accessors<number | undefined>("last_requested_id", undefined)
-
-const [get_loading, set_loading] = get_storage_accessors("loading", false)
-const [get_resolved, set_resolved] = get_storage_accessors("resolved", false)
 
 browser.runtime.onMessage.addListener(async (m, sender) => {
   console.log("Background Script receiving message", m, "from popup", sender);
@@ -37,6 +25,8 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         contract_data_map: await get_data_map(),
         loading: await get_loading(),
         resolved: await get_resolved(),
+        effects: await get_effects(),
+        eth_price: await get_eth_price(),
       })
     } else if (m.msg_type === "respond_to_approve_request") {
       await set_resolved(true)
@@ -63,7 +53,17 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
 
       const trace = await simulate_transaction(m.from, m.to, m.input, m.value)
       await update_contract_data_map(await get_contracts_touched())
-      get_effects(trace, await get_data_map())
+      calculate_effects(trace, await get_data_map()).then(async effects => {
+        await set_effects(effects)
+        const eth_price = await fetch_eth_price()
+        await set_eth_price(eth_price)
+        browser.runtime.sendMessage({
+          msg_type: "update_transfers",
+          effects,
+          contract_data_map: await get_data_map(),
+          eth_price: await get_eth_price()
+        })
+      })
       await set_loading(false)
       await browser.runtime.sendMessage({
         msg_type: "update_transfers",

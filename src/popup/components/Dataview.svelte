@@ -2,9 +2,11 @@
   import Seperator from "./Seperator.svelte";
   import VerticalSeperator from "./VerticalSeperator.svelte";
 
+  import Effects from "./effects/Effects.svelte";
   import Reputation from "./Reputation.svelte"
   import CallTrace from "./CallTrace.svelte";
   import Statediff from "./Statediff.svelte";
+
   import { window_type } from "../stores";
 
   const tabs = ["Effects", "Contracts", "Execution", "State"]
@@ -39,7 +41,7 @@
     class:overflow-x-scroll={current_tab === "Execution"}
   >
     {#if current_tab == "Effects"}
-      <p>Effects</p>
+      <Effects />
     {:else if current_tab == "Contracts"}
       <Reputation />
     {:else if current_tab == "Execution"}
