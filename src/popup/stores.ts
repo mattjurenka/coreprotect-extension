@@ -14,6 +14,13 @@ export const eth_price = writable({})
 export const loading = writable(false)
 export const resolved = writable(false)
 
+export const accepted_tos = writable(false)
+browser.storage.local.get("accepted_tos")
+  .then(found => accepted_tos.set(found.accepted_tos || false))
+
+export const accept_tos = () => browser.storage.local.set({accepted_tos: true})
+  .then(() => accepted_tos.set(true))
+
 const stores = {
   contract_data_map, contracts_touched, state_diff,
   call_trace, loading, resolved, effects, eth_price

@@ -51,19 +51,13 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         url: url + "?floating=true", type: "popup", height: 620, width: 468
       })
 
-      const trace = await simulate_transaction(m.from, m.to, m.input, m.value)
+      const [trace, eth_price] = await Promise.all([
+        simulate_transaction(m.from, m.to, m.input, m.value),
+        fetch_eth_price().then(set_eth_price)
+      ])
       await update_contract_data_map(await get_contracts_touched())
-      calculate_effects(trace, await get_data_map()).then(async effects => {
-        await set_effects(effects)
-        const eth_price = await fetch_eth_price()
-        await set_eth_price(eth_price)
-        browser.runtime.sendMessage({
-          msg_type: "update_transfers",
-          effects,
-          contract_data_map: await get_data_map(),
-          eth_price: await get_eth_price()
-        })
-      })
+      const effects = await calculate_effects(trace, await get_data_map())
+      await set_effects(effects)
       await set_loading(false)
       await browser.runtime.sendMessage({
         msg_type: "update_transfers",
@@ -73,6 +67,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         contract_data_map: await get_data_map(),
         loading: await get_loading(),
         resolved: await get_resolved(),
+        effects, eth_price
       }).catch(console.log)
     }
   } catch (err) {

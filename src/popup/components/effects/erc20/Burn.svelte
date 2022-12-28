@@ -1,6 +1,6 @@
 <script>
   import Etherscanlink from "../../etherscanlink.svelte";
-  import { calculate_dollar_value, calculate_dollar_value2, format_bignum_from_hex, format_decimal } from "../../../utils";
+  import { calculate_dollar_value, format_decimal } from "../../../utils";
   import { contract_data_map, eth_price } from "../../../stores"
   import HelpIcon from "../../HelpIcon.svelte";
   import {Decimal} from "decimal.js"
@@ -9,7 +9,7 @@
   export let args;
   export let caller;
 
-  const [spender, amount] = args
+  const [amount] = args
   const value = new Decimal("0x" + amount)
 
   let help_expanded = false
@@ -27,7 +27,7 @@
   <div class="flex mb-2 gap-2">
     <div class="flex flex-col justify-center">
       <p class="text-base font-jetbrains underline decoration-2 font-bold">
-        Approve - <Etherscanlink contract_hex={contract}/>
+        Burn From - <Etherscanlink contract_hex={contract}/>
       </p>
     </div>
     <div class="cursor-pointer hover:bg-lightgrey rounded-full flex gap-2 p-1" on:click={toggle_expanded}>
@@ -38,15 +38,12 @@
   {#if help_expanded}
     <div class="my-1 p-2 bg-lightgrey">
       <p class="font-jetbrains text-paragraph">
-        This transaction includes an approval from <Etherscanlink contract_hex={caller} />, of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>,
-        to be spent by <Etherscanlink contract_hex={spender}/>. This means that <Etherscanlink contract_hex={spender}/>
-        will now be able to spend up to {format_decimal(tokens_transferred)} of <Etherscanlink contract_hex={caller} />'s coins at their discretion. At current Uniswap price,
-        this approval represents a value of {format_decimal(dollars_transferred)} in USD.
+        This transaction includes a burn (token destruction) of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>
+        from <Etherscanlink contract_hex={caller} />. At current Uniswap price, this burn represents a value of {format_decimal(dollars_transferred)} in USD.
       </p>
     </div>
   {/if}
-  <p class="text-base font-jetbrains mb-1">Approver: <Etherscanlink contract_hex={caller} /></p>
-  <p class="text-base font-jetbrains mb-1">Spender: <Etherscanlink contract_hex={spender} /></p>
+  <p class="text-base font-jetbrains mb-1">Account: <Etherscanlink contract_hex={caller} /></p>
   <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(tokens_transferred)}</p>
   {#if dollars_transferred}
     <p class="text-base font-jetbrains">USD Value: {format_decimal(dollars_transferred)}</p>

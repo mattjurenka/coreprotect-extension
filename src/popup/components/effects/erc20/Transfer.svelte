@@ -37,7 +37,7 @@
   </div>
   {#if help_expanded}
     <div class="my-1 p-2 bg-lightgrey">
-      <p class="font-jetbrains text-base">
+      <p class="font-jetbrains text-paragraph">
         This transaction includes a transfer of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>
         from <Etherscanlink contract_hex={caller} /> to <Etherscanlink contract_hex={to} />.
         At current Uniswap price, this transfer represents a value of {format_decimal(dollars_transferred)} in USD.

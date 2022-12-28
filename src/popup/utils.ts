@@ -33,19 +33,6 @@ export const format_bignum_from_hex = (wei: string, decimals: number) => {
 
 export const format_wei_from_hex = (wei: string) => format_bignum_from_hex(wei, 18)
 
-export const calculate_dollar_value2 = (
-  formatted_tokens_transferred: string, currency: string, currency_map: {[currency: string]: string | undefined},
-  eth_per_token: string | undefined
-): number | undefined => {
-  const currency_per_eth = currency_map[currency]
-  if (!currency_per_eth || !eth_per_token) {
-    return
-  }
-  const tokens_transferred = Number(formatted_tokens_transferred.replace(/,/g, ""))
-  const num_eth_per_token = Number(eth_per_token)
-  return tokens_transferred * num_eth_per_token * Number(currency_per_eth)
-}
-
 export const calculate_dollar_value = (
   tokens_transferred: Decimal, currency: string,
   currency_map: {[currency: string]: string | undefined}, eth_per_token: Decimal

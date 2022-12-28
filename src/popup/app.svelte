@@ -2,9 +2,8 @@
   import Actions from "./components/Actions.svelte";
   import Dataview from "./components/Dataview.svelte";
   import Seperator from "./components/Seperator.svelte";
-  import { resolved, window_type } from "./stores"
-
-  $: console.log("resolved", resolved)
+  import { resolved, window_type, accepted_tos } from "./stores"
+  import TermsOfService from "./TermsOfService.svelte";
 </script>
 
 <style global lang="postcss">
@@ -16,14 +15,19 @@
 
 
 <div class="min-w-[28rem] p-4 {window_type === 'popup' ? 'h-[36rem] max-w-[28rem]' : 'h-full'}">
-  <div class="p-4 h-full border-2 border-blue flex flex-col">
-    <h1 class="font-vollkorn text-xl text-blue mb-4">Review Transaction</h1>
-    <Dataview />
-    {#if !$resolved}
+  {#if $accepted_tos}
+    <div class="p-4 h-full border-2 border-blue flex flex-col">
+      <h1 class="font-vollkorn text-xl text-blue mb-4">Review Transaction</h1>
       <Seperator />
-      <p class="font-jetbrains text-base mt-4">Continue with this transaction?</p>
-      <Actions />
-    {/if}
-  </div>
+      <Dataview />
+      {#if !$resolved}
+        <Seperator />
+        <p class="font-jetbrains text-base mt-4">Continue with this transaction?</p>
+        <Actions />
+      {/if}
+    </div>
+  {:else}
+    <TermsOfService />
+  {/if}
 </div>
 

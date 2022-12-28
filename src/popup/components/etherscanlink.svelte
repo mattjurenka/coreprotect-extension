@@ -12,6 +12,8 @@
     const url = `https://etherscan.io/address/${contract_hex}`
     browser.runtime.sendMessage({msg_type: "open_tab", url})
   }
+
+  $: suffix = $your_address === contract_hex ? " (You)" : ""
 </script>
 
 <a 
@@ -21,11 +23,8 @@
   on:click={open_etherscan}
 >
   {#if contract_name}
-    {clamp_str_to(30)(contract_name)}
+    {clamp_str_to(30)(contract_name) + suffix}
   {:else}
-    {clamp_hex(contract_hex)}
-  {/if}
-  {#if $your_address === contract_hex}
-    {" (You)"}
+    {clamp_hex(contract_hex) + suffix}
   {/if}
 </a>

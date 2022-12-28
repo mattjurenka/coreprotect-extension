@@ -7,6 +7,7 @@ module.exports = {
       white: "#FFFFFF",
       orange: "#FF8600",
       lightgrey: "#F5F5F5",
+      darkgrey: "#404040",
     },
     extend: {},
     fontFamily: {
@@ -15,7 +16,9 @@ module.exports = {
     },
     fontSize: {
       base: ["1rem", "1rem"],
-      xl: ["2rem", "2rem"]
+      xl: ["2rem", "2rem"],
+      paragraph: ["1rem", "1.25rem"],
+      small: ["0.75rem", "1rem"]
     }
   },
   plugins: [],
