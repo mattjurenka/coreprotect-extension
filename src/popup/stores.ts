@@ -11,6 +11,7 @@ export const call_trace = writable([])
 export const effects = writable([])
 export const your_address = writable("0x")
 export const eth_price = writable({})
+export const eth_transfers = writable([])
 
 export const loading = writable(false)
 export const resolved = writable(false)
@@ -30,7 +31,7 @@ tabs.subscribe($tabs => current_tab.set($tabs[0]))
 
 const stores = {
   contract_data_map, contracts_touched, state_diff,
-  call_trace, loading, resolved, effects, eth_price
+  call_trace, loading, resolved, effects, eth_price, eth_transfers
 }
 
 browser.runtime.onMessage.addListener(async m => {
@@ -46,7 +47,9 @@ browser.runtime.onMessage.addListener(async m => {
       }
       if ("effects" in m) {
         tabs.set(
-          m.effects.some(([_, __, schema, fn_sig]: any[]) => supported_effects?.[schema]?.includes(fn_sig))
+          m.effects.some(
+            ([_, __, schema, fn_sig]: any[]) => supported_effects?.[schema]?.includes(fn_sig)
+          ) || m.eth_transfers.length > 0
             ? with_transfers : without_transfers
         )
       }

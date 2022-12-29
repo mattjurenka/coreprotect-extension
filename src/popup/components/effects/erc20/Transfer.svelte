@@ -27,7 +27,7 @@
   <div class="flex mb-2">
     <div class="flex flex-col justify-center">
       <p class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-bold">
-        Transfer - <Etherscanlink contract_hex={contract}/>
+        ERC20 Transfer - <Etherscanlink contract_hex={contract}/>
       </p>
     </div>
     <div class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
@@ -40,7 +40,7 @@
       <p class="font-jetbrains text-paragraph">
         This transaction includes a transfer of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>
         from <Etherscanlink contract_hex={caller} /> to <Etherscanlink contract_hex={to} />.
-        At current Uniswap price, this transfer represents a value of {format_decimal(dollars_transferred)} in USD.
+        At current Uniswap price, this transfer represents a value of ${format_decimal(dollars_transferred)} in USD.
       </p>
     </div>
   {/if}
@@ -48,6 +48,6 @@
   <p class="text-base font-jetbrains mb-1">To: <Etherscanlink contract_hex={to} /></p>
   <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(tokens_transferred)}</p>
   {#if dollars_transferred}
-    <p class="text-base font-jetbrains">USD Value: {format_decimal(dollars_transferred)}</p>
+    <p class="text-base font-jetbrains">USD Value: ${format_decimal(dollars_transferred)}</p>
   {/if}
 </div>

@@ -2,7 +2,7 @@ import browser from "webextension-polyfill"
 import { calculate_effects } from "./calculate_effects"
 import { fetch_eth_price } from "./eth_price"
 
-import { get_loading, get_state_diff, get_call_trace, get_contracts_touched, get_data_map, get_resolved, get_effects, get_last_requested_id, get_eth_price } from "./stores"
+import { get_loading, get_state_diff, get_call_trace, get_contracts_touched, get_data_map, get_resolved, get_effects, get_last_requested_id, get_eth_price, EthTransfer, set_eth_transfers, get_eth_transfers } from "./stores"
 import { set_loading, set_state_diff, set_call_trace, set_contracts_touched, set_data_map, set_resolved, set_effects, set_last_requested_id, set_eth_price} from "./stores"
 import { ExternalCall } from "./stores"
 
@@ -26,6 +26,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         loading: await get_loading(),
         resolved: await get_resolved(),
         effects: await get_effects(),
+        eth_transfers: await get_eth_transfers(),
         eth_price: await get_eth_price(),
       })
     } else if (m.msg_type === "respond_to_approve_request") {
@@ -68,6 +69,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         contract_data_map: await get_data_map(),
         loading: await get_loading(),
         resolved: await get_resolved(),
+        eth_transfers: await get_eth_transfers(),
         effects, eth_price
       }).catch(console.log)
     }
@@ -105,8 +107,14 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
     
     const returned_trace = json.transaction.transaction_info.call_trace;
     const touched: Set<string> = new Set()
+    const eth_transfers: EthTransfer[] = []
     const recurse_trace = (call: any): ExternalCall[] => {
       touched.add(call.to)
+      if (call.value && call.value !== "0") {
+        eth_transfers.push({
+          from: call.from, to: call.to, value: call.value
+        })
+      }
       return [{
           from: call.from, to: call.to, value: call.value, input: call.input
         },
@@ -114,6 +122,7 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
       ]
     }
 
+    await set_eth_transfers(eth_transfers)
     await set_call_trace(recurse_trace(returned_trace))
     await set_contracts_touched(Array.from(touched))
 
