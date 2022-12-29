@@ -10,7 +10,7 @@
 </script>
 
 <a
-  class="text-base font-jetbrains underline decoration-2 font-blue"
+  class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-blue"
   href="#"
   on:click={open_link}
 >

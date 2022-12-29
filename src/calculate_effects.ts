@@ -57,22 +57,6 @@ const parse_arguments = (fn_sig: string, input: string): string[] => {
   }, [[], input.slice(10)] as [string[], string])[0]
 }
 
-const update_erc20_token_data = async (contract: string): Promise<any> => {
-  const response = await fetch(
-    "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2",
-    {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        query: `{ tokens(where: {id: "${contract.toLowerCase()}"}) { id name decimals symbol derivedETH }}`
-      })
-    }
-  )
-  const data_map = await get_data_map()
-  const token = (await response.json()).data.tokens[0]
-  data_map[contract]["uniswap_token_info"] = token
-  await set_data_map(data_map)
-}
-
 export const calculate_effects = async (calls: [string, string, string][], data_map: any): Promise<[string, string, string, string, string[]][]> => {
   const interesting_sigs = Object.values(effect_fnsig).flat(1)
   const effect_calls = calls.filter(([_, to, input]) => {
@@ -102,12 +86,6 @@ export const calculate_effects = async (calls: [string, string, string][], data_
           return [
             calls_by_contract[contract], await res.json()
           ] as [[string, string, string, string][], any]
-        })
-        .then(async ([calls, opensea_data]) => {
-          if (opensea_data.schema_name === "ERC20") {
-            await update_erc20_token_data(calls[0][1])
-          }
-          return [calls, opensea_data] as [[string, string, string, string][], any]
         })
     )
   )

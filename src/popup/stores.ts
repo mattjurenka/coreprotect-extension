@@ -1,5 +1,6 @@
 import { writable } from "svelte/store"
 import browser from "webextension-polyfill"
+import { supported_effects } from "./effects"
 
 export const window_type = new URLSearchParams(window?.location?.search).has("floating") ? "floating" : "popup"
 
@@ -17,9 +18,15 @@ export const resolved = writable(false)
 export const accepted_tos = writable(false)
 browser.storage.local.get("accepted_tos")
   .then(found => accepted_tos.set(found.accepted_tos || false))
-
 export const accept_tos = () => browser.storage.local.set({accepted_tos: true})
   .then(() => accepted_tos.set(true))
+
+const with_transfers = ["Transfers", "Execution", "Contracts", "State"]
+const without_transfers = ["Execution", "Contracts", "State"]
+
+export let tabs = writable(with_transfers)
+export const current_tab = writable(with_transfers[0])
+tabs.subscribe($tabs => current_tab.set($tabs[0]))
 
 const stores = {
   contract_data_map, contracts_touched, state_diff,
@@ -36,6 +43,12 @@ browser.runtime.onMessage.addListener(async m => {
     Object.entries(stores).forEach(([store_name, store]) => {
       if (store_name in m) {
         store.set(m[store_name])
+      }
+      if ("effects" in m) {
+        tabs.set(
+          m.effects.some(([_, __, schema, fn_sig]: any[]) => supported_effects?.[schema]?.includes(fn_sig))
+            ? with_transfers : without_transfers
+        )
       }
     })
     const first_caller: string | undefined = m.call_trace?.[0]?.from

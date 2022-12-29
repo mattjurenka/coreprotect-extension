@@ -24,13 +24,13 @@
 </script>
 
 <div>
-  <div class="flex mb-2 gap-2">
+  <div class="flex mb-2">
     <div class="flex flex-col justify-center">
-      <p class="text-base font-jetbrains underline decoration-2 font-bold">
+      <p class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-bold">
         TransferFrom - <Etherscanlink contract_hex={contract}/>
       </p>
     </div>
-    <div class="cursor-pointer hover:bg-lightgrey rounded-full flex gap-2 p-1" on:click={toggle_expanded}>
+    <div class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
       <p class="text-base font-jetbrains">Help</p>
       <HelpIcon />
     </div>

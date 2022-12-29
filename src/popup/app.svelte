@@ -17,7 +17,7 @@
 <div class="min-w-[28rem] p-4 {window_type === 'popup' ? 'h-[36rem] max-w-[28rem]' : 'h-full'}">
   {#if $accepted_tos}
     <div class="p-4 h-full border-2 border-blue flex flex-col">
-      <h1 class="font-vollkorn text-xl text-blue mb-4">Review Transaction</h1>
+      <h1 class="font-vollkorn text-xl text-blue mb-4 [word-spacing:0.25rem]">Review Transaction</h1>
       <Seperator />
       <Dataview />
       {#if !$resolved}

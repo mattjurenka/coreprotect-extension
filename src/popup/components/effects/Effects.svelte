@@ -29,9 +29,12 @@
 
 <div class="pt-4 pr-4">
   {#each $effects as [caller, contract, schema_name, fn_sig, args]}
-    <div class="mb-4">
-      <svelte:component this={effects_by_fn_sig[schema_name][fn_sig] || SvelteComponent} caller={caller} contract={contract} args={args} />
-    </div>
+    {@const comp = effects_by_fn_sig?.[schema_name]?.[fn_sig] || SvelteComponent}
+    {#if comp}
+      <div class="mb-4">
+        <svelte:component this={comp} caller={caller} contract={contract} args={args} />
+      </div>
+    {/if}
   {/each}
 </div>
 <p class="text-darkgrey text-small font-jetbrains">

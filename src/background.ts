@@ -56,6 +56,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         fetch_eth_price().then(set_eth_price)
       ])
       await update_contract_data_map(await get_contracts_touched())
+      await Promise.all((await get_contracts_touched()).map(update_erc20_token_data))
       const effects = await calculate_effects(trace, await get_data_map())
       await set_effects(effects)
       await set_loading(false)
@@ -161,4 +162,22 @@ const update_contract_data_map = async (contracts: any) => {
     ]))
   )
   await set_data_map(data_map)
+}
+
+const update_erc20_token_data = async (contract: string): Promise<any> => {
+  try {
+    const response = await fetch(
+      "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2",
+      {
+        method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          query: `{ tokens(where: {id: "${contract.toLowerCase()}"}) { id name decimals symbol derivedETH }}`
+        })
+      }
+    )
+    const data_map = await get_data_map()
+    const token = (await response.json())?.data?.tokens?.[0]
+    data_map[contract].uniswap_token_info = token
+    await set_data_map(data_map)
+  } catch (e) {}
 }

@@ -17,7 +17,7 @@
 </script>
 
 <a 
-  class="text-base text-blue font-jetbrains decoration-2 underline font-bold"
+  class="text-base text-blue font-jetbrains decoration-2 underline-offset-2 underline font-bold"
   href="#"
   title="{contract_hex}"
   on:click={open_etherscan}
