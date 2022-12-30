@@ -10,7 +10,7 @@
   import BurnFrom from "./erc20/BurnFrom.svelte";
   import Mint from "./erc20/Mint.svelte";
   import Burn from "./erc20/Burn.svelte";
-import Eth from "./Eth.svelte";
+  import Eth from "./Eth.svelte";
 
   const effects_by_fn_sig = {
     "ERC20": {
@@ -32,7 +32,7 @@ import Eth from "./Eth.svelte";
 
 <div class="pt-2 pr-4">
   {#each $effects as [caller, contract, schema_name, fn_sig, args]}
-    {@const comp = effects_by_fn_sig?.[schema_name]?.[fn_sig] || SvelteComponent}
+    {@const comp = effects_by_fn_sig?.[schema_name]?.[fn_sig]}
     {#if comp}
       <div class="mb-4">
         <svelte:component this={comp} caller={caller} contract={contract} args={args} />

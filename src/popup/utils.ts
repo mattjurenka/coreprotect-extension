@@ -37,7 +37,7 @@ export const calculate_dollar_value = (
   tokens_transferred: Decimal, currency: string,
   currency_map: {[currency: string]: string | undefined}, eth_per_token: Decimal
 ): Decimal | undefined => {
-  const currency_per_eth = currency_map[currency]
+  const currency_per_eth = currency_map?.[currency]
   if (!currency_per_eth) {
     return undefined
   }

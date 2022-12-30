@@ -52,7 +52,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         url: url + "?floating=true", type: "popup", height: 620, width: 468
       })
 
-      const [trace, eth_price] = await Promise.all([
+      const [trace] = await Promise.all([
         simulate_transaction(m.from, m.to, m.input, m.value),
         fetch_eth_price().then(set_eth_price)
       ])
@@ -70,7 +70,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         loading: await get_loading(),
         resolved: await get_resolved(),
         eth_transfers: await get_eth_transfers(),
-        effects, eth_price
+        effects, eth_price: await get_eth_price()
       }).catch(console.log)
     }
   } catch (err) {

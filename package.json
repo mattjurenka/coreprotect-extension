@@ -1,6 +1,6 @@
 {
   "name": "coreprotect-extension",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "",
   "scripts": {
     "build-chrome-manifest": "node buildscripts/manifest.js manifests/basemanifest.json manifests/chromemanifest.json src/manifest.json",

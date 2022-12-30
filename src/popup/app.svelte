@@ -2,7 +2,7 @@
   import Actions from "./components/Actions.svelte";
   import Dataview from "./components/Dataview.svelte";
   import Seperator from "./components/Seperator.svelte";
-  import { resolved, window_type, accepted_tos } from "./stores"
+  import { resolved, loading, window_type, accepted_tos } from "./stores"
   import TermsOfService from "./TermsOfService.svelte";
 </script>
 
@@ -20,7 +20,7 @@
       <h1 class="font-vollkorn text-xl text-blue mb-4 [word-spacing:0.25rem]">Review Transaction</h1>
       <Seperator />
       <Dataview />
-      {#if !$resolved}
+      {#if !$resolved && !$loading}
         <Seperator />
         <p class="font-jetbrains text-base mt-4">Continue with this transaction?</p>
         <Actions />
