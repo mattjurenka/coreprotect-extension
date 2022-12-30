@@ -27,7 +27,7 @@
   <div class="flex mb-2">
     <div class="flex flex-col justify-center">
       <p class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-bold">
-        Burn From - <Etherscanlink contract_hex={contract}/>
+        ERC20 Burn From - <Etherscanlink contract_hex={contract}/>
       </p>
     </div>
     <div class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
@@ -39,13 +39,13 @@
     <div class="my-1 p-2 bg-lightgrey">
       <p class="font-jetbrains text-paragraph">
         This transaction includes a burn (token destruction) of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>
-        from <Etherscanlink contract_hex={account} />. At current Uniswap price, this burn represents a value of {format_decimal(dollars_transferred)} in USD.
+        from <Etherscanlink contract_hex={account} />. At current Uniswap price, this burn represents a value of ${format_decimal(dollars_transferred)} in USD.
       </p>
     </div>
   {/if}
   <p class="text-base font-jetbrains mb-1">Account: <Etherscanlink contract_hex={account} /></p>
   <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(tokens_transferred)}</p>
   {#if dollars_transferred}
-    <p class="text-base font-jetbrains">USD Value: {format_decimal(dollars_transferred)}</p>
+    <p class="text-base font-jetbrains">USD Value: ${format_decimal(dollars_transferred)}</p>
   {/if}
 </div>

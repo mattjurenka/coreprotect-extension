@@ -16,9 +16,11 @@ import Eth from "./Eth.svelte";
     "ERC20": {
       "transfer(address,uint256)": Transfer,
       "approve(address,uint256)": Approve,
-      "transferFrom(address,uint256)": TransferFrom,
+      "transferFrom(address,address,uint256)": TransferFrom,
       "increaseAllowance(address,uint256)": IncreaseAllowance,
+      "increaseApproval(address,uint256)": IncreaseAllowance,
       "decreaseAllowance(address,uint256)": DecreaseAllowance,
+      "decreaseApproval(address,uint256)": DecreaseAllowance,
       "mint(address,uint256)": Mint,
       "burn(uint256)": Burn,
       "burnFrom(address,uint256)": BurnFrom,

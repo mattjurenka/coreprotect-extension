@@ -27,7 +27,7 @@
   <div class="flex mb-2">
     <div class="flex flex-col justify-center">
       <p class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-bold">
-        Approve - <Etherscanlink contract_hex={contract}/>
+        ERC20 Approve - <Etherscanlink contract_hex={contract}/>
       </p>
     </div>
     <div class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
@@ -41,7 +41,7 @@
         This transaction includes an approval from <Etherscanlink contract_hex={caller} />, of {format_decimal(tokens_transferred)} coins of <Etherscanlink contract_hex={contract}/>,
         to be spent by <Etherscanlink contract_hex={spender}/>. This means that <Etherscanlink contract_hex={spender}/>
         will now be able to spend up to {format_decimal(tokens_transferred)} of <Etherscanlink contract_hex={caller} />'s coins at their discretion. At current Uniswap price,
-        this approval represents a value of {format_decimal(dollars_transferred)} in USD.
+        this approval represents a value of ${format_decimal(dollars_transferred)} in USD.
       </p>
     </div>
   {/if}
@@ -49,6 +49,6 @@
   <p class="text-base font-jetbrains mb-1">Spender: <Etherscanlink contract_hex={spender} /></p>
   <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(tokens_transferred)}</p>
   {#if dollars_transferred}
-    <p class="text-base font-jetbrains">USD Value: {format_decimal(dollars_transferred)}</p>
+    <p class="text-base font-jetbrains">USD Value: ${format_decimal(dollars_transferred)}</p>
   {/if}
 </div>
