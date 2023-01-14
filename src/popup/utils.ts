@@ -1,4 +1,8 @@
 import Decimal from "decimal.js"
+import { writable, Writable } from "svelte/store"
+import browser from "webextension-polyfill"
+
+export const VERSION = "__VERSION__"
 
 export const clamp_str_to = (n: number) => (str: string) =>
   str.length > n ?
@@ -46,3 +50,35 @@ export const calculate_dollar_value = (
 
 export const add_commas = (number_str: string) => number_str.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
 export const format_decimal = (n: Decimal) => add_commas(n.toSD(8).toString())
+
+export const get_localstorage_accessors = <T>(store_key: string, default_value: T): [
+  Writable<T>, (value: T) => Promise<void>
+] => {
+  const store = writable<T>(default_value)
+  browser.storage.local.get(store_key).then(found => {
+    if (store_key in found) {
+      store.set(found[store_key])
+    }
+  })
+  return [
+    store,
+    async (value: T) => {
+      await browser.storage.local.set({[store_key]: value})
+      store.set(value)
+    },
+  ]
+}
+
+const BASE_URL = "https://coreprotect-workers.matthewjurenka.workers.dev"
+const VERSION_URL = BASE_URL + "/version/"
+
+const get_latest_version = async (): Promise<string> => {
+  const res = await fetch(VERSION_URL)
+  const json = await res.json()
+  return json.extension_version || "0.0.0"
+}
+
+export const is_outdated = async (): Promise<boolean> =>
+  (await get_latest_version()).localeCompare(VERSION, undefined, {
+    numeric: true, sensitivity: "base"
+  }) > 0

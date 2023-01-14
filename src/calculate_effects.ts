@@ -1,32 +1,58 @@
-export const effect_fnsig = {
-  "ERC20": [
-    "transfer(address,uint256)",
-    "approve(address,uint256)",
-    "transferFrom(address,uint256)",
-    "increaseAllowance(address,uint256)",
-    "increaseApproval(address,uint256)",
-    "decreaseAllowance(address,uint256)",
-    "decreaseApproval(address,uint256)",
-    "mint(address,uint256)",
-    "burn(uint256)",
-    "burnFrom(address,uint256)",
-  ],
-  "ERC721": [
-    "safeTransferFrom(address,address,uint256)",
-    "transferFrom(address,address,uint256)",
-    "approve(address,uint256)",
-    "setApprovalForAll(address,bool)",
-    "safeTransferFrom(address,address,uint256,bytes)",
-    "mintWithTokenURI(address,uint256,string)",
-    "burn(uint256)",
-  ],
-  "ERC1155": [
-    "setApprovalForAll(address,bool)",
-    "safeTransferFrom(address,address,uint256,uint256,bytes)",
-    "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
-    "burn(address,uint256,uint256)",
-    "burnBatch(address,uint256[],uint256[])",
-  ]
+import { CallInfo, EffectType, EthTransfer } from "./stores"
+
+const from_caller_to_first_arg = (caller: string, args: string[]) => ({
+  from: caller, to: args[0]
+})
+
+const from_first_to_second_arg = (caller: string, args: string[]) => ({
+  from: args[0], to: args[1]
+})
+
+const from_caller_without_to = (caller: string, args: string[]) => ({
+  from: caller, to: undefined
+})
+
+const from_first_arg_without_to = (caller: string, args: string[]) => ({
+  from: args[0], to: undefined
+})
+
+export const effect_fnsig: {
+  [schema: string]: {
+    [fn_sig: string]: [
+      (caller: string, args: string[]) => {
+        from: string | undefined,
+        to: string | undefined
+      }, number]
+  }
+} = {
+  "ERC20": {
+    "transfer(address,uint256)": [from_caller_to_first_arg, 1],
+    "approve(address,uint256)": [from_caller_to_first_arg, 1],
+    "transferFrom(address,address,uint256)": [from_first_to_second_arg, 2],
+    "increaseAllowance(address,uint256)": [from_caller_to_first_arg, 1],
+    "increaseApproval(address,uint256)": [from_caller_to_first_arg, 1],
+    "decreaseAllowance(address,uint256)": [from_caller_to_first_arg, 1],
+    "decreaseApproval(address,uint256)": [from_caller_to_first_arg, 1],
+    "mint(address,uint256)": [from_caller_to_first_arg, 1],
+    "burn(uint256)": [from_caller_without_to, 0],
+    "burnFrom(address,uint256)": [from_first_arg_without_to, 1],
+  },
+//  "ERC721": [
+//    "safeTransferFrom(address,address,uint256)",
+//    "transferFrom(address,address,uint256)",
+//    "approve(address,uint256)",
+//    "setApprovalForAll(address,bool)",
+//    "safeTransferFrom(address,address,uint256,bytes)",
+//    "mintWithTokenURI(address,uint256,string)",
+//    "burn(uint256)",
+//  ],
+//  "ERC1155": [
+//    "setApprovalForAll(address,bool)",
+//    "safeTransferFrom(address,address,uint256,uint256,bytes)",
+//    "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
+//    "burn(address,uint256,uint256)",
+//    "burnBatch(address,uint256[],uint256[])",
+//  ]
 }
 
 const create_fixed_parse_fn = (length: number, padding: number) =>
@@ -57,8 +83,12 @@ const parse_arguments = (fn_sig: string, input: string): string[] => {
   }, [[], input.slice(10)] as [string[], string])[0]
 }
 
-export const calculate_effects = async (calls: [string, string, string][], data_map: any): Promise<[string, string, string, string, string[]][]> => {
-  const interesting_sigs = Object.values(effect_fnsig).flat(1)
+
+export const calculate_effects = async (
+  calls: [string, string, string][], data_map: any,
+  first_address: string | undefined
+): Promise<Record<EffectType, (CallInfo | EthTransfer)[]>> => {
+  const interesting_sigs = Object.values(effect_fnsig).map(Object.keys).flat(1)
   const effect_calls = calls.filter(([_, to, input]) => {
     if (input === undefined) {
       return false
@@ -90,9 +120,38 @@ export const calculate_effects = async (calls: [string, string, string][], data_
     )
   )
 
-  return call_nft_data_map.map(([calls, opensea_data]) =>
-    calls.map(([caller, contract, input, fn_sig]) =>
-      [caller, contract, opensea_data.schema_name, fn_sig, parse_arguments(fn_sig, input)] as [string, string, string, string, string[]]
-    )
+  const all_calls = call_nft_data_map.map(([calls, opensea_data]) =>
+    calls.map(([caller, contract, input, fn_sig]) => {
+      const args = parse_arguments(fn_sig, input)
+      const [calc_parties, value_idx] = effect_fnsig[opensea_data.schema_name][fn_sig]
+      const { from, to } = calc_parties(caller, args)
+      return {
+        caller, contract, schema_name: opensea_data.schema_name, fn_sig,
+        args, from, to, type: "erc20", value: args[value_idx]
+      } as CallInfo
+    })
   ).flat(1)
+
+  return all_calls.reduce((acc, cur) => {
+    if ([
+      "approve(address,uint256)", "increaseAllowance(address,uint256)",
+      "increaseApproval(address,uint256)", "decreaseAllowance(address,uint256)",
+      "decreaseApproval(address,uint256)",
+    ].includes(cur.fn_sig)) {
+      acc["approval"].push(cur)
+    } else if (cur.to && cur.to === first_address) {
+      acc["inbound"].push(cur)
+    } else if (cur.from && cur.from === first_address) {
+      acc["outbound"].push(cur)
+    } else {
+      acc["external"].push(cur)
+    }
+    return acc
+  }, {
+    inbound: [],
+    outbound: [],
+    approval: [],
+    external: [],
+  } as Record<EffectType, (CallInfo | EthTransfer)[]>)
 }
+

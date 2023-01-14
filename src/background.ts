@@ -6,8 +6,9 @@ import { get_loading, get_state_diff, get_call_trace, get_contracts_touched, get
 import { set_loading, set_state_diff, set_call_trace, set_contracts_touched, set_data_map, set_resolved, set_effects, set_last_requested_id, set_eth_price} from "./stores"
 import { ExternalCall } from "./stores"
 
-const SIMULATE_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/simulate/"
-const CONTRACT_DATA_URL = "https://coreprotect-workers.matthewjurenka.workers.dev/get_contract_data/"
+const BASE_URL = "https://coreprotect-workers.matthewjurenka.workers.dev"
+const SIMULATE_URL = BASE_URL + "/simulate/"
+const CONTRACT_DATA_URL = BASE_URL + "/get_contract_data/"
 
 browser.runtime.onMessage.addListener(async (m, sender) => {
   console.log("Background Script receiving message", m, "from popup", sender);
@@ -57,14 +58,29 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
         fetch_eth_price().then(set_eth_price)
       ])
       await update_contract_data_map(await get_contracts_touched())
+      
       await Promise.all((await get_contracts_touched()).map(update_erc20_token_data))
-      const effects = await calculate_effects(trace, await get_data_map())
+      const effects = await calculate_effects(trace, await get_data_map(), (await get_call_trace())?.[0]?.from)
+
+      const call_trace = await get_call_trace()
+      const first_caller: string | undefined = call_trace?.[0]?.from;
+      (await get_eth_transfers()).forEach(value => {
+        if (first_caller && first_caller === value.to) {
+          effects["inbound"].push(value)
+        } else if (first_caller && first_caller === value.from) {
+          effects["outbound"].push(value)
+        } else {
+          effects["external"].push(value)
+        }
+      })
+      await set_call_trace(call_trace)
+
       await set_effects(effects)
       await set_loading(false)
       await browser.runtime.sendMessage({
         msg_type: "update_transfers",
         state_diff: await get_state_diff(),
-        call_trace: await get_call_trace(),
+        call_trace,
         contracts_touched: await get_contracts_touched(),
         contract_data_map: await get_data_map(),
         loading: await get_loading(),
@@ -112,7 +128,7 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
       touched.add(call.to)
       if (call.value && call.value !== "0") {
         eth_transfers.push({
-          from: call.from, to: call.to, value: call.value
+          from: call.from, to: call.to, value: call.value, type: "eth"
         })
       }
       return [{
@@ -190,3 +206,4 @@ const update_erc20_token_data = async (contract: string): Promise<any> => {
     await set_data_map(data_map)
   } catch (e) {}
 }
+

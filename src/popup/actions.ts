@@ -20,3 +20,10 @@ export const report_and_continue = () => {
     status: "reported"
   })
 }
+
+export const open_update_page = () => {
+  browser.runtime.sendMessage({
+    msg_type: "open_tab",
+    url: "https://coreprotect.io/"
+  })
+}
