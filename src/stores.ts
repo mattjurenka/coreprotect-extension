@@ -1,7 +1,10 @@
 import { get_default_dict, get_storage_accessors } from "./util"
 
 export type DataMap = { [address: string]: any }
-export type ExternalCall = { from: string, to: string, input: string, value: string }
+export type ExternalCall = {
+  from: string, to: string, input: string, value: string,
+  delegate_caller: string | undefined 
+}
 export type DiffType = ["memory", string, string, string] | ["balance", string, string]
 export type StateDiff = { [address: string]: DiffType[] }
 export type EthPriceMap = {[currency: string]: string}
@@ -14,6 +17,11 @@ export interface CallInfo {
   from: string | undefined
   to: string | undefined
   value: string
+  name: string | undefined
+  nft_id: string | undefined
+  nft_picture: string | undefined
+  nft_name: string | undefined
+  nft_link: string | undefined
   type: "erc20"
 }
 export type EffectType = "inbound" | "outbound" | "approval" | "external"

@@ -94,7 +94,7 @@ browser.runtime.onMessage.addListener(async (m, sender) => {
   }
 })
 
-const simulate_transaction = async (from: any, to: any, input: any, value: any): Promise<[string, string, string][]> => {
+const simulate_transaction = async (from: any, to: any, input: any, value: any): Promise<[string, string, string, {from: string, to: string} | undefined][]> => {
   try {
     const res = await fetch(SIMULATE_URL, {
       method: "POST",
@@ -124,7 +124,7 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
     const returned_trace = json.transaction.transaction_info.call_trace;
     const touched: Set<string> = new Set()
     const eth_transfers: EthTransfer[] = []
-    const recurse_trace = (call: any): ExternalCall[] => {
+    const recurse_trace = (call: any, caller: any): ExternalCall[] => {
       touched.add(call.to)
       if (call.value && call.value !== "0") {
         eth_transfers.push({
@@ -132,14 +132,18 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
         })
       }
       return [{
-          from: call.from, to: call.to, value: call.value, input: call.input
+          from: call.from, to: call.to, value: call.value, input: call.input,
+          delegate_caller: call.call_type === "DELEGATECALL" ? {
+            from: caller.from,
+            to: caller.to
+          } : undefined
         },
-        ...(call.calls ? call.calls.map(recurse_trace) : [])
+        ...(call.calls ? call.calls.map((subcall: any) => recurse_trace(subcall, call)) : [])
       ]
     }
 
     await set_eth_transfers(eth_transfers)
-    await set_call_trace(recurse_trace(returned_trace))
+    await set_call_trace(recurse_trace(returned_trace, {}))
     await set_contracts_touched(Array.from(touched))
 
     const state_diff = await get_state_diff()
@@ -154,7 +158,12 @@ const simulate_transaction = async (from: any, to: any, input: any, value: any):
         }
       })
     await set_state_diff(state_diff)
-    return json.transaction.call_trace.map((call: any) => [call.from, call.to, call.input])
+    return (json.transaction.call_trace as Array<any>).map((call: any, idx, arr) => [
+      call.from, call.to, call.input, call.call_type === "DELEGATECALL" ? {
+        from: arr[idx-1].from,
+        to: arr[idx-1].to
+      } : undefined
+    ])
   } catch (err) {
     console.error(err)
   }

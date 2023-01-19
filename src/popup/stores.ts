@@ -3,6 +3,9 @@ import browser from "webextension-polyfill"
 import { supported_effects } from "./effects"
 import { get_localstorage_accessors } from "./utils"
 
+export const VERSION: string = "__VERSION__"
+export const BROWSER: string = "__BROWSER__"
+
 export interface CallInfo {
   caller: string
   contract: string
@@ -11,7 +14,12 @@ export interface CallInfo {
   args: string[]
   from: string | undefined
   to: string | undefined
-  value: string
+  value: string | undefined
+  name: string | undefined
+  nft_id: string | undefined
+  nft_picture: string | undefined
+  nft_name: string | undefined
+  nft_link: string | undefined
   type: "erc20"
 }
 export type EffectType = "inbound" | "outbound" | "approval" | "external"

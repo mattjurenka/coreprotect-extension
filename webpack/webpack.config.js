@@ -36,11 +36,19 @@ export default {
   module: {
     rules: [
       {
-        test: /utils.ts$/,
+        test: /stores.ts$/,
         loader: 'string-replace-loader',
         options: {
-          search: '__VERSION__',
-          replace: process.env.npm_package_version
+          multiple: [
+            {
+              search: '__VERSION__',
+              replace: process.env.npm_package_version
+            },
+            {
+              search: '__BROWSER__',
+              replace: process.env.BROWSER
+            }
+          ]
         }
       },
       {

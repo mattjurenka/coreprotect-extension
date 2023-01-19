@@ -1,8 +1,7 @@
 import Decimal from "decimal.js"
 import { writable, Writable } from "svelte/store"
 import browser from "webextension-polyfill"
-
-export const VERSION = "__VERSION__"
+import { VERSION } from "./stores"
 
 export const clamp_str_to = (n: number) => (str: string) =>
   str.length > n ?

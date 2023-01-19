@@ -22,37 +22,44 @@ export const effect_fnsig: {
       (caller: string, args: string[]) => {
         from: string | undefined,
         to: string | undefined
-      }, number]
+      }, number | undefined, number | undefined]
   }
 } = {
   "ERC20": {
-    "transfer(address,uint256)": [from_caller_to_first_arg, 1],
-    "approve(address,uint256)": [from_caller_to_first_arg, 1],
-    "transferFrom(address,address,uint256)": [from_first_to_second_arg, 2],
-    "increaseAllowance(address,uint256)": [from_caller_to_first_arg, 1],
-    "increaseApproval(address,uint256)": [from_caller_to_first_arg, 1],
-    "decreaseAllowance(address,uint256)": [from_caller_to_first_arg, 1],
-    "decreaseApproval(address,uint256)": [from_caller_to_first_arg, 1],
-    "mint(address,uint256)": [from_caller_to_first_arg, 1],
-    "burn(uint256)": [from_caller_without_to, 0],
-    "burnFrom(address,uint256)": [from_first_arg_without_to, 1],
+    "transfer(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "approve(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "transferFrom(address,address,uint256)": [from_first_to_second_arg, 2, undefined],
+    "safeTransferFrom(address,address,uint256)": [from_first_to_second_arg, 2, undefined],
+    "increaseAllowance(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "increaseApproval(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "decreaseAllowance(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "decreaseApproval(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "mint(address,uint256)": [from_caller_to_first_arg, 1, undefined],
+    "burn(uint256)": [from_caller_without_to, 0, undefined],
+    "burnFrom(address,uint256)": [from_first_arg_without_to, 1, undefined],
   },
-//  "ERC721": [
-//    "safeTransferFrom(address,address,uint256)",
-//    "transferFrom(address,address,uint256)",
-//    "approve(address,uint256)",
-//    "setApprovalForAll(address,bool)",
-//    "safeTransferFrom(address,address,uint256,bytes)",
-//    "mintWithTokenURI(address,uint256,string)",
-//    "burn(uint256)",
-//  ],
-//  "ERC1155": [
-//    "setApprovalForAll(address,bool)",
-//    "safeTransferFrom(address,address,uint256,uint256,bytes)",
-//    "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)",
-//    "burn(address,uint256,uint256)",
-//    "burnBatch(address,uint256[],uint256[])",
-//  ]
+  "ERC721": {
+    "safeTransferFrom(address,address,uint256)": [from_first_to_second_arg, undefined, 2],
+    "transferFrom(address,address,uint256)": [from_first_to_second_arg, undefined, 2],
+    //"approve(address,uint256)": [from_caller_to_first_arg, undefined, 1],
+    //"setApprovalForAll(address,bool)": [from_caller_to_first_arg, undefined, undefined],
+    "safeTransferFrom(address,address,uint256,bytes)": [from_first_to_second_arg, undefined, 2],
+    "transferFrom(address,address,uint256,bytes)": [from_first_to_second_arg, undefined, 2],
+    //"mintWithTokenURI(address,uint256,string)": [from_caller_to_first_arg, undefined, 1],
+    //"burn(uint256)": [from_caller_without_to, undefined, 0],
+  },
+  "ERC1155": {
+    //"setApprovalForAll(address,bool)": [from_caller_to_first_arg, undefined, undefined],
+    "safeTransferFrom(address,address,uint256,uint256,bytes)": [from_first_to_second_arg, 3, 2],
+    "safeTransferFrom(address,address,uint256,bytes)": [from_first_to_second_arg, undefined, 2],
+    "safeTransferFrom(address,address,uint256)": [from_first_to_second_arg, undefined, 2],
+    "transferFrom(address,address,uint256,uint256,bytes)": [from_first_to_second_arg, 3, 2],
+    "transferFrom(address,address,uint256,bytes)": [from_first_to_second_arg, undefined, 2],
+    "transferFrom(address,address,uint256)": [from_first_to_second_arg, undefined, 2],
+    //"safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)": [],
+    //"burn(address,uint256,uint256)",
+    //"burnBatch(address,uint256[],uint256[])",
+  }
 }
 
 const create_fixed_parse_fn = (length: number, padding: number) =>
@@ -85,7 +92,7 @@ const parse_arguments = (fn_sig: string, input: string): string[] => {
 
 
 export const calculate_effects = async (
-  calls: [string, string, string][], data_map: any,
+  calls: [string, string, string, {from: string, to: string} | undefined][], data_map: any,
   first_address: string | undefined
 ): Promise<Record<EffectType, (CallInfo | EthTransfer)[]>> => {
   const interesting_sigs = Object.values(effect_fnsig).map(Object.keys).flat(1)
@@ -98,13 +105,16 @@ export const calculate_effects = async (
     return fn_sig && interesting_sigs.includes(fn_sig)
   })
 
-  const calls_by_contract = effect_calls.reduce((acc, [from, to, input]) => {
+  const calls_by_contract = effect_calls.reduce((acc, [from, to, input, delegate_info]) => {
     const fn_sig: string = data_map[to]?.selectors?.[input.slice(2, 10)]
+    const call_info: [string, string, string, string] = [
+      delegate_info?.from || from, delegate_info?.to || to, input, fn_sig
+    ]
 
     if (to in acc) {
-      acc[to].push([from, to, input, fn_sig])
+      acc[to].push(call_info)
     } else {
-      acc[to] = [[from, to, input, fn_sig]]
+      acc[to] = [call_info]
     }
     return acc
   }, {} as {[contract:string]: [string, string, string, string][]})
@@ -123,16 +133,31 @@ export const calculate_effects = async (
   const all_calls = call_nft_data_map.map(([calls, opensea_data]) =>
     calls.map(([caller, contract, input, fn_sig]) => {
       const args = parse_arguments(fn_sig, input)
-      const [calc_parties, value_idx] = effect_fnsig[opensea_data.schema_name][fn_sig]
+      const [calc_parties, value_idx, nft_idx] = effect_fnsig[opensea_data.schema_name][fn_sig]
       const { from, to } = calc_parties(caller, args)
       return {
         caller, contract, schema_name: opensea_data.schema_name, fn_sig,
-        args, from, to, type: "erc20", value: args[value_idx]
+        args, from, to, type: "erc20", name: opensea_data.name,
+        value: value_idx !== undefined ? args[value_idx] : "1",
+        nft_id: nft_idx !== undefined ? BigInt("0x" + args[nft_idx]).toString() : undefined
       } as CallInfo
     })
   ).flat(1)
 
-  return all_calls.reduce((acc, cur) => {
+  const with_nft_info = await Promise.all(all_calls.map(async call =>
+    call.nft_id ?
+      fetch(`https://api.opensea.io/api/v1/asset/${call.contract}/${call.nft_id}/`)
+        .then(async res => {
+          const data = await res.json()
+          call.nft_link = data.external_link || data.permalink
+          call.nft_name = data.name
+          call.nft_picture = data.image_url
+          return call
+        }) :
+      call
+  ))
+
+  return with_nft_info.reduce((acc, cur) => {
     if ([
       "approve(address,uint256)", "increaseAllowance(address,uint256)",
       "increaseApproval(address,uint256)", "decreaseAllowance(address,uint256)",

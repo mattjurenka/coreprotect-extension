@@ -1,14 +1,15 @@
 <script>
-  import Etherscanlink from "../etherscanlink.svelte";
-  import { calculate_dollar_value, format_decimal } from "../../utils";
-  import { contract_data_map, eth_price } from "../../stores"
-  import HelpIcon from "../icons/HelpIcon.svelte";
+  import Etherscanlink from "../../etherscanlink.svelte";
+  import { calculate_dollar_value, format_decimal } from "../../../utils";
+  import { contract_data_map, eth_price } from "../../../stores"
+  import HelpIcon from "../../icons/HelpIcon.svelte";
   import {Decimal} from "decimal.js"
 
   export let contract
 
   export let from
   export let to
+  export let name
 
   export let value
   export let HelpComponent
@@ -27,19 +28,17 @@
 </script>
 
 <div>
-  <div class="flex mb-1">
-    <div class="flex flex-col justify-center">
-      <p class="text-base font-jetbrains font-bold">
-        <Etherscanlink contract_hex={contract}/> - ERC20
-      </p>
-    </div>
+  <div class="flex items-start mb-1">
+    <p class="text-base font-jetbrains font-bold">
+      <Etherscanlink name_override={name} contract_hex={contract}/> - Token
+    </p>
     <button class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
       <p class="text-base font-jetbrains">Help</p>
       <HelpIcon />
     </button>
   </div>
   {#if help_expanded}
-    <div class="my-1 p-2 bg-lightgrey">
+    <div class="mt-1 mb-2 p-2 bg-lightgrey">
       <p class="font-jetbrains text-paragraph">
         <svelte:component 
           this={HelpComponent} from={from} to={to} tokens_transferred={tokens_transferred}
