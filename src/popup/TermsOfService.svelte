@@ -1,5 +1,5 @@
 <script>
-  import { accept_tos } from "./stores";
+  import { set_accepted_tos } from "./stores";
 
   let accepted_one = false
   let accepted_two = false
@@ -7,7 +7,7 @@
   const try_accept_tos = () => {
     console.log(accepted_one, accepted_two, accepted_three)
     if (accepted_one && accepted_two && accepted_three) {
-      accept_tos()
+      set_accepted_tos(true)
     } else {
     }
   }

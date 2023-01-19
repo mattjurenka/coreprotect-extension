@@ -4,9 +4,10 @@
   import { clamp_str_to, clamp_hex } from "../utils";
 
   export let contract_hex = ""
+  export let name_override = undefined;
   $: contract_data = $contract_data_map[contract_hex]
-  $: contract_name = contract_data?.uniswap_token_info ?
-    `$${contract_data.uniswap_token_info.symbol}` : contract_data?.contract_name
+  $: contract_name = name_override || (contract_data?.uniswap_token_info ?
+    `$${contract_data?.uniswap_token_info?.symbol}` : contract_data?.contract_name)
 
   const open_etherscan = () => {
     const url = `https://etherscan.io/address/${contract_hex}`

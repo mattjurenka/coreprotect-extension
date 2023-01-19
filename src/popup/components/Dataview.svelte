@@ -35,8 +35,7 @@
     </div>
     <Seperator />
     <div
-      class="min-h-[20rem] overflow-y-scroll grow min-h-0"
-      class:overflow-x-scroll={$current_tab === "Execution"}
+      class="min-h-[20rem] overflow-y-scroll grow min-h-0 {['Execution'].includes($current_tab) ? 'overflow-x-scroll' : 'overflow-x-hidden'}"
     >
       {#if $current_tab == "Transfers"}
         <Effects />

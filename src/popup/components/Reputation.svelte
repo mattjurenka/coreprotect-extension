@@ -59,15 +59,19 @@
       })
 </script>
 
-<div class="pr-4 pb-4">
+<div class="pr-4 py-4">
+  <div class="flex">
+    <p class="text-base font-jetbrains font-bold">Contract</p>
+    <p class="text-base font-jetbrains font-bold ml-auto">Reputation</p>
+  </div>
   {#each info_map as [contract, bigcs_score, subheaders]}
     <div class="flex mt-4 items-center">
       <p class="mr-2">{get_emoji(bigcs_score || -1)} </p>
       <Etherscanlink contract_hex={contract} />
       {#if subheaders.length > 0}
-        <div on:click={() => toggle_expanded(contract)}>
+        <button on:click={() => toggle_expanded(contract)}>
           <Chevron expanded={contract in expanded_map ? expanded_map[contract] : true} />
-        </div>
+        </button>
       {/if}
       <p class="ml-auto text-base font-jetbrains font-bold">{bigcs_score === -1 ? "Unknown" : bigcs_score}</p>
     </div>

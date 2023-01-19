@@ -1,5 +1,11 @@
 import browser from "webextension-polyfill"
 
+export const get_default_dict = <T>(get_default: () => T): Record<string | symbol, T> => new Proxy({} as any, {
+  get(obj, prop) {
+    return prop in obj ? obj[prop] : get_default();
+  },
+})
+
 const get_storage_accessors = <T>(key_name: string, def: T): [() => Promise<T>, (val: T) => Promise<void>] => {
   let last_queued_op: Promise<any> = Promise.resolve();
   let state_status: ["init" | "uninit", T] = ["uninit", def];

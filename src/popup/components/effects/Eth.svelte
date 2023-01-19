@@ -2,7 +2,7 @@
   import Etherscanlink from "../etherscanlink.svelte";
   import { format_decimal } from "../../utils";
   import { eth_price } from "../../stores"
-  import HelpIcon from "../HelpIcon.svelte"
+  import HelpIcon from "../icons/HelpIcon.svelte"
   import {Decimal} from "decimal.js"
 
   export let from;
@@ -19,16 +19,16 @@
 </script>
 
 <div>
-  <div class="flex mb-2 gap-2">
+  <div class="flex mb-1 gap-2">
     <div class="flex flex-col justify-center">
-      <p class="text-base font-jetbrains underline decoration-2 underline-offset-2 font-bold">
+      <p class="text-base font-jetbrains font-bold">
         ETH Transfer
       </p>
     </div>
-    <div class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
+    <button class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>
       <p class="text-base font-jetbrains">Help</p>
       <HelpIcon />
-    </div>
+    </button>
   </div>
   {#if help_expanded}
     <div class="my-1 p-2 bg-lightgrey">
@@ -40,7 +40,7 @@
     </div>
   {/if}
   <p class="text-base font-jetbrains mb-1">From: <Etherscanlink contract_hex={from} /></p>
-  <p class="text-base font-jetbrains mb-1">To: <Etherscanlink contract_hex={to} /></p>
+  <p class="text-base font-jetbrains mb-2">To: <Etherscanlink contract_hex={to} /></p>
   <p class="text-base font-jetbrains mb-1">Amount: {format_decimal(eth_transferred)}</p>
   {#if dollars_transferred}
     <p class="text-base font-jetbrains">USD Value: ${format_decimal(dollars_transferred)}</p>

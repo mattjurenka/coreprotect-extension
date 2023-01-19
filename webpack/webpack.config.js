@@ -36,6 +36,22 @@ export default {
   module: {
     rules: [
       {
+        test: /stores.ts$/,
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {
+              search: '__VERSION__',
+              replace: process.env.npm_package_version
+            },
+            {
+              search: '__BROWSER__',
+              replace: process.env.BROWSER
+            }
+          ]
+        }
+      },
+      {
         test: /\.tsx?$/,
         loader: "ts-loader",
         exclude: /node_modules/,
@@ -74,6 +90,7 @@ export default {
           }
         ]
       },
+      {test: /\.json$/, loader: 'json-loader'},
     ],
   },
   plugins: [
@@ -85,6 +102,6 @@ export default {
         {from: "src/popup/app.html", to: "popup/app.html"}
       ]
     }),
-    new MiniCssExtractPlugin({filename: '[name].css'}),
+    new MiniCssExtractPlugin({filename: '[name].css'})
   ],
 };
