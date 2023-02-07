@@ -64,19 +64,19 @@ import Erc1155BaseEffect from "./erc1155/ERC1155BaseEffect.svelte";
                   HelpComponent={comp}
                 />
               {:else if schema === "ERC721"}
-                {@const { nft_link, nft_name, nft_picture, name } = effect}
+                {@const { nft_link, nft_name, nft_picture, nft_id, name } = effect}
                 <Erc1155BaseEffect 
                   contract={contract} from={from} to={to} caller={caller}
                   value={value} HelpComponent={comp} nft_link={nft_link}
-                  nft_name={nft_name} nft_picture={nft_picture}
+                  nft_name={nft_name} nft_picture={nft_picture} nft_id={nft_id}
                   name={name}
                 />
               {:else if schema === "ERC1155"}
-                {@const { nft_link, nft_name, nft_picture, name } = effect}
+                {@const { nft_link, nft_name, nft_picture, nft_id, name } = effect}
                 <Erc1155BaseEffect 
                   contract={contract} from={from} to={to} caller={caller}
                   value={value} HelpComponent={comp} nft_link={nft_link}
-                  nft_name={nft_name} nft_picture={nft_picture}
+                  nft_name={nft_name} nft_picture={nft_picture} nft_id={nft_id}
                   name={name}
                 />
               {/if}

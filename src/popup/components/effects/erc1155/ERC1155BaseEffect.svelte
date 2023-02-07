@@ -12,11 +12,11 @@ import { open_link } from "../../../actions";
   export let HelpComponent
 
   const value_decimal = Number("0x" + value)
-  $: console.log(value_decimal, value)
 
   export let nft_link
   export let nft_name
   export let nft_picture
+  export let nft_id
 
   let help_expanded = false
   const toggle_expanded = () => {
@@ -44,10 +44,16 @@ import { open_link } from "../../../actions";
       </p>
     </div>
   {/if}
-  <button on:click={_ => open_link(nft_link)}>
-    <img src={nft_picture} width="250" class="max-w-full rounded-lg" alt={nft_name} />
-  </button>
-  <div class="flex my-4 flex-wrap gap-1">
+  <a href="#" class="{nft_link ? 'cursor-pointer' : 'cursor-default'}" on:click={_ => nft_link ? open_link(nft_link) : undefined}>
+    {#if nft_picture}
+      <img src={nft_picture} width="250" class="max-w-full rounded-lg" alt={nft_name} />
+    {:else}
+      <div class="rounded-lg bg-lightgrey flex flex-col justify-center items-center w-[256px] h-[256px]">
+        <p class="text-base font-bold font-jetbrains">No Image Found</p>
+      </div>
+    {/if}
+  </a>
+  <div class="flex mt-4 mb-2 flex-wrap gap-1">
     <div class="flex gap-2 mr-4">
       <p class="text-base font-jetbrains">Name:</p>
       <p class="font-bold text-base font-jetbrains mr-3 break-all">{nft_name || "Unknown Name"}</p>
@@ -55,6 +61,12 @@ import { open_link } from "../../../actions";
     <div class="flex gap-2">
       <p class="text-base font-jetbrains">Amount:</p>
       <p class="font-bold text-base font-jetbrains">{value_decimal}</p>
+    </div>
+  </div>
+  <div class="flex mb-4 flex-wrap gap-1">
+    <div class="flex gap-2">
+      <p class="text-base font-jetbrains">Token ID:</p>
+      <p class="font-bold text-base font-jetbrains">{nft_id}</p>
     </div>
   </div>
   {#if from}
