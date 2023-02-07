@@ -12,7 +12,8 @@ browser.runtime.onMessage.addListener((cmd: Command) => {
 
 window.addEventListener("message", event => {
   if (event?.data?.msg_type === "simulate_transaction") {
-    browser.runtime.sendMessage(event.data as SimulateTransactionCMD).catch(console.log)
+    const cmd: SimulateTransactionCMD = event?.data
+    browser.runtime.sendMessage(cmd).catch(console.log)
   }
 })
 
