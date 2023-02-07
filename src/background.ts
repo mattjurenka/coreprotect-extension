@@ -21,6 +21,9 @@ browser.runtime.onMessage.addListener(async (m: Command, sender) => {
     } else if (m.msg_type === "open_tab") {
       $commands.next(m)
     } else if (m.msg_type === "simulate_transaction") {
+      if (sender.tab?.id) {
+        m.data.last_requested_id = sender.tab?.id
+      }
       $commands.next(m)
     }
   } catch (err) {

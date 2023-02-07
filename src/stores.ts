@@ -52,7 +52,7 @@ const $global_state_transition = from(get_global_state()).pipe(
 )
 
 $global_state_transition.subscribe(async ([state, last_command]) => {
-  console.log("Global State Transition just fired", state, last_command)
+  console.log("Global State Transition just fired", last_command.msg_type, state, last_command)
   const send_state_update = (update: (state: WritableDraft<GlobalState>) => void) =>
     $commands.next({
       msg_type: "update_global_state",

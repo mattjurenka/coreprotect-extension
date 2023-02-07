@@ -1,7 +1,7 @@
 <script>
   import Etherscanlink from "../../etherscanlink.svelte";
   import { calculate_dollar_value, format_decimal } from "../../../utils";
-  import { contract_data_map, eth_price } from "../../../stores"
+  import { contract_data_map, eth_price, chain } from "../../../stores"
   import HelpIcon from "../../icons/HelpIcon.svelte";
   import {Decimal} from "decimal.js"
 
@@ -21,10 +21,9 @@
     help_expanded = !help_expanded
   }
 
-  $: contract_data = $contract_data_map[contract]
-  $: tokens_transferred = (new Decimal(10)).pow(new Decimal(contract_data?.uniswap_token_info?.decimals || 18).negated()).mul(decimal_value)
-  $: eth_per_token = new Decimal(contract_data?.uniswap_token_info?.derivedETH || 0)
-  $: dollars_transferred = calculate_dollar_value(tokens_transferred, "USD", $eth_price, eth_per_token)
+  $: moralis_data = ($contract_data_map[$chain]?.[contract])?.moralis_price_data
+  $: tokens_transferred = (new Decimal(10)).pow(new Decimal(moralis_data?.nativePrice?.decimals || 18).negated()).mul(decimal_value)
+  $: dollars_transferred = new Decimal(moralis_data?.usdPrice || 1).mul(tokens_transferred)
 </script>
 
 <div>

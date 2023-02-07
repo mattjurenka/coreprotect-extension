@@ -1,13 +1,13 @@
 {
   "name": "coreprotect-extension",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "description": "",
   "scripts": {
     "build-chrome-manifest": "node buildscripts/manifest.js manifests/basemanifest.json manifests/chromemanifest.json src/manifest.json $npm_package_version",
     "build-firefox-manifest": "node buildscripts/manifest.js manifests/basemanifest.json manifests/firefoxmanifest.json src/manifest.json $npm_package_version",
     "build-chrome": "npm run build-chrome-manifest && BROWSER=chrome BACKEND='https://coreprotect-workers.matthewjurenka.workers.dev' npm run webpack && npm run zip",
     "build-dev-chrome": "npm run build-chrome-manifest && BROWSER=chrome BACKEND='http://127.0.0.1:8787' npm run webpack",
-    "build-firefox": "npm run build-firefox-manifest && BROWSER=firefox npm run webpack && npm run zip",
+    "build-firefox": "npm run build-firefox-manifest && BROWSER=firefox BACKEND='https://coreprotect-workers.matthewjurenka.workers.dev' npm run webpack && npm run zip",
     "zip": "node buildscripts/zip-upload.js",
     "webpack": "webpack --config webpack/webpack.config.js"
   },
