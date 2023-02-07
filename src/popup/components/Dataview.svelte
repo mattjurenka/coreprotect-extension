@@ -6,7 +6,8 @@
   import CallTrace from "./CallTrace.svelte";
   import Statediff from "./Statediff.svelte";
 
-  import { call_trace, current_tab, loading, tabs } from "../stores";
+  import { call_trace, current_tab, loading, error, tabs } from "../stores";
+  import { open_discord } from "../actions";
 
   const set_tab = new_tab => () => {
     current_tab.set(new_tab)
@@ -14,9 +15,23 @@
 </script>
 
 <div class="grow min-h-0 flex flex-col">
-  {#if $loading}
+  {#if $error !== ""}
+    <div class="h-full w-full">
+      <div class="text-center mt-[33%]">
+        <p class="text-base font-bold font-jetbrains">{$error}</p>
+        <p class="text-base font-jetbrains mt-4">For technical support, join the
+          <a
+            class="font-jetbrains text-base text-blue underline decoration-2 underline-offset-2 mb-2" href="#"
+            on:click={open_discord}
+          >
+            Discord
+          </a>
+        </p>
+      </div>
+    </div>
+  {:else if $loading}
     <div class="h-full w-full flex flex-col items-center justify-center">
-      <p class="text-base font-jetbrains">Loading Data...</p>
+      <p class="text-base font-jetbrains">Running Analytics...</p>
     </div>
   {:else if $call_trace.length > 0}
     <div class="flex gap-4">

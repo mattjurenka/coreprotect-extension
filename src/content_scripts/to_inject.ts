@@ -1,7 +1,10 @@
-let approval = "requested"
-window.addEventListener("message", event => {
-  if (event?.data?.msg_type === "respond_to_request") {
-    approval = event.data.approval
+import { Command, RequestStatusType, SimulateTransactionCMD } from "../types"
+
+let approval: RequestStatusType = "requested"
+window.addEventListener("message", (event) => {
+  const cmd: Command | undefined = event?.data
+  if (cmd?.msg_type === "respond_to_approve_request") {
+    approval = cmd.data.status
   }
 })
 
@@ -10,9 +13,18 @@ const intervalId = setInterval(() => {
   if ((window as any).ethereum?.request) {
     const old_request = (window as any).ethereum.request;
     ((window as any).ethereum.request as any) = (requestArgs: any) => {
-      if (requestArgs.method === "eth_sendTransaction") {
+      console.log(requestArgs)
+      const network_id: string = (window as any).ethereum.networkVersion
+      if (requestArgs.method === "eth_sendTransaction" && ["1", "56"].includes(network_id)) {
         const { from, to, value, data } = requestArgs.params[0]
-        window.postMessage({msg_type: "simulate_transaction", from, to, value, input: data})
+
+        window.postMessage({
+          msg_type: "simulate_transaction",
+          data: {
+            from, to, value, input: data, network_id
+          }
+        } as SimulateTransactionCMD)
+
         return new Promise((resolve, reject) => {
           const check_approval_id = setInterval(() => {
             if (approval !== "requested") {

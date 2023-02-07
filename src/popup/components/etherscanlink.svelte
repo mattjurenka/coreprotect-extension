@@ -1,17 +1,16 @@
 <script>
-  import browser from "webextension-polyfill";
-  import { contract_data_map, your_address } from "../stores"
+  import { open_link } from "../actions";
+  import { contract_data_map, your_address, chain } from "../stores"
   import { clamp_str_to, clamp_hex } from "../utils";
 
   export let contract_hex = ""
   export let name_override = undefined;
-  $: contract_data = $contract_data_map[contract_hex]
+  $: contract_data = $contract_data_map[$chain][contract_hex]
   $: contract_name = name_override || (contract_data?.uniswap_token_info ?
     `$${contract_data?.uniswap_token_info?.symbol}` : contract_data?.contract_name)
 
   const open_etherscan = () => {
-    const url = `https://etherscan.io/address/${contract_hex}`
-    browser.runtime.sendMessage({msg_type: "open_tab", url})
+    open_link(`https://etherscan.io/address/${contract_hex}`)
   }
 
   $: suffix = $your_address === contract_hex ? " (You)" : ""

@@ -1,18 +1,18 @@
 import browser from "webextension-polyfill"
+import { Command, SimulateTransactionCMD } from "../types"
 
-browser.runtime.onMessage.addListener(m => {
-  console.log("Content Script receiving message of type", m.msg_type, "from Background Script", m)
-  if (m.msg_type === "respond_to_approve_request") {
-    window.postMessage({
-      msg_type: "respond_to_request",
-      approval: m.status
-    })
+browser.runtime.onMessage.addListener((cmd: Command) => {
+  const { msg_type } = cmd
+
+  console.log("Content Script receiving message of type", msg_type, "from Background Script", cmd)
+  if (msg_type === "respond_to_approve_request") {
+    window.postMessage(cmd)
   }
 })
 
 window.addEventListener("message", event => {
   if (event?.data?.msg_type === "simulate_transaction") {
-    browser.runtime.sendMessage(event.data).catch(console.log)
+    browser.runtime.sendMessage(event.data as SimulateTransactionCMD).catch(console.log)
   }
 })
 

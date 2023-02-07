@@ -1,4 +1,6 @@
-import { CallInfo, EffectType, EthTransfer } from "./stores"
+import { CallInfo, Chain, DataMap, EffectType, EthTransfer, ExternalCallDelegate, MoralisNFTData } from "./types"
+import { NFT_INFO_URL } from "./urls"
+import { check_token_type } from "./util"
 
 const from_caller_to_first_arg = (caller: string, args: string[]) => ({
   from: caller, to: args[0]
@@ -92,70 +94,62 @@ const parse_arguments = (fn_sig: string, input: string): string[] => {
 
 
 export const calculate_effects = async (
-  calls: [string, string, string, {from: string, to: string} | undefined][], data_map: any,
-  first_address: string | undefined
+  calls: ExternalCallDelegate[], data_map: DataMap,
+  first_address: string | undefined, chain: Chain
 ): Promise<Record<EffectType, (CallInfo | EthTransfer)[]>> => {
   const interesting_sigs = Object.values(effect_fnsig).map(Object.keys).flat(1)
-  const effect_calls = calls.filter(([_, to, input]) => {
-    if (input === undefined) {
-      return false
-    }
-    const selector = input.slice(2, 10)
-    const fn_sig: string | undefined = data_map[to]?.selectors?.[selector]
-    return fn_sig && interesting_sigs.includes(fn_sig)
-  })
+  const effect_calls = (calls
+    .filter(([_, __, input]) => input !== undefined)
+    .map(([from, to, input, delegate_info]) => [
+      delegate_info?.from || from, delegate_info?.to || to, input,
+      data_map[chain][to]?.selectors?.[input.slice(2, 10)]
+    ] as [string, string, string, string | undefined])
+    .filter(([_, __, ___, fn_sig]) => fn_sig !== undefined && interesting_sigs.includes(fn_sig)) as [string, string, string, string][])
+  console.log(effect_calls)
 
-  const calls_by_contract = effect_calls.reduce((acc, [from, to, input, delegate_info]) => {
-    const fn_sig: string = data_map[to]?.selectors?.[input.slice(2, 10)]
-    const call_info: [string, string, string, string] = [
-      delegate_info?.from || from, delegate_info?.to || to, input, fn_sig
-    ]
+  const with_token_info = effect_calls
+    .map(([caller, contract, input, fn_sig]) => {
+      const { name, schema } = check_token_type(contract, data_map, chain)
+      console.log(contract, "determined to have name", name, "with schema", schema)
 
-    if (to in acc) {
-      acc[to].push(call_info)
-    } else {
-      acc[to] = [call_info]
-    }
-    return acc
-  }, {} as {[contract:string]: [string, string, string, string][]})
+      if (schema) {
+        const args = parse_arguments(fn_sig, input)
+        const [calc_parties, value_idx, nft_idx] = effect_fnsig[schema][fn_sig]
+        const { from, to } = calc_parties(caller, args)
+        return {
+          caller, contract, schema, fn_sig,
+          args, from, to, type: "erc20", name,
+          value: value_idx !== undefined ? args[value_idx] : "1",
+          nft_id: nft_idx !== undefined ? BigInt("0x" + args[nft_idx]).toString() : undefined
+        } as CallInfo
+      } else {
+        return null
+      }
+    }).filter(call_info => call_info !== null) as CallInfo[]
+  console.log(with_token_info)
 
-  const call_nft_data_map = await Promise.all(
-    Object.keys(calls_by_contract).map(contract =>
-      fetch(`https://api.opensea.io/api/v1/asset_contract/${contract}`)
-        .then(async res => {
-          return [
-            calls_by_contract[contract], await res.json()
-          ] as [[string, string, string, string][], any]
-        })
-    )
-  )
-
-  const all_calls = call_nft_data_map.map(([calls, opensea_data]) =>
-    calls.map(([caller, contract, input, fn_sig]) => {
-      const args = parse_arguments(fn_sig, input)
-      const [calc_parties, value_idx, nft_idx] = effect_fnsig[opensea_data.schema_name][fn_sig]
-      const { from, to } = calc_parties(caller, args)
-      return {
-        caller, contract, schema_name: opensea_data.schema_name, fn_sig,
-        args, from, to, type: "erc20", name: opensea_data.name,
-        value: value_idx !== undefined ? args[value_idx] : "1",
-        nft_id: nft_idx !== undefined ? BigInt("0x" + args[nft_idx]).toString() : undefined
-      } as CallInfo
-    })
-  ).flat(1)
-
-  const with_nft_info = await Promise.all(all_calls.map(async call =>
+  const with_nft_info = await Promise.all(with_token_info.map(async call =>
     call.nft_id ?
-      fetch(`https://api.opensea.io/api/v1/asset/${call.contract}/${call.nft_id}/`)
+      fetch(NFT_INFO_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({contract: call.contract, chain, token_id: call.nft_id})
+      })
         .then(async res => {
           const data = await res.json()
-          call.nft_link = data.external_link || data.permalink
-          call.nft_name = data.name
-          call.nft_picture = data.image_url
+          console.log(data)
+          const metadata = data.normalized_metadata
+          call.name = data.name
+          call.nft_link = metadata.external_link
+          call.nft_name = metadata.name
+          call.nft_picture = metadata.image
           return call
         }) :
       call
   ))
+  console.log(with_nft_info)
 
   return with_nft_info.reduce((acc, cur) => {
     if ([

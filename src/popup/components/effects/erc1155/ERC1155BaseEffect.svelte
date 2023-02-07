@@ -50,7 +50,7 @@ import { open_link } from "../../../actions";
   <div class="flex my-4 flex-wrap gap-1">
     <div class="flex gap-2 mr-4">
       <p class="text-base font-jetbrains">Name:</p>
-      <p class="font-bold text-base font-jetbrains mr-3 break-all">{nft_name}</p>
+      <p class="font-bold text-base font-jetbrains mr-3 break-all">{nft_name || "Unknown Name"}</p>
     </div>
     <div class="flex gap-2">
       <p class="text-base font-jetbrains">Amount:</p>

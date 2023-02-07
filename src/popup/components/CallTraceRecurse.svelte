@@ -1,6 +1,6 @@
 <script>
-  import { contract_data_map } from "../stores"
-import Chevron from "./Chevron.svelte";
+  import { contract_data_map, chain } from "../stores"
+  import Chevron from "./Chevron.svelte";
   import Etherscanlink from "./etherscanlink.svelte";
 
   export let call_trace;
@@ -10,7 +10,7 @@ import Chevron from "./Chevron.svelte";
     expanded = !expanded
   }
 
-  $: contract_data = $contract_data_map[call_trace[0]?.to]
+  $: contract_data = $contract_data_map[$chain][call_trace[0]?.to]
   $: display = ((data) => {
     if (call_trace[0] === undefined) {
       return [2]
