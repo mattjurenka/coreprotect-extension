@@ -54,29 +54,29 @@ import Erc1155BaseEffect from "./erc1155/ERC1155BaseEffect.svelte";
       <p class="mb-4 text-base font-jetbrains font-bold underline decoration-2 underline-offset-2">{title}</p>
       {#each $effects[key] as effect}
         {#if effect.type === "erc20"}
-          {@const { schema_name, fn_sig, caller, contract, from, to, value, name } = effect}
-          {@const comp = effect_help_by_fn_sig?.[schema_name]?.[fn_sig]}
+          {@const { schema, fn_sig, caller, contract, from, to, value } = effect}
+          {@const comp = effect_help_by_fn_sig?.[schema]?.[fn_sig]}
           {#if comp}
             <div class="mb-4 pl-4">
-              {#if effect.schema_name === "ERC20"}
+              {#if schema === "ERC20"}
                 <ERC20BaseEffect
                   contract={contract} from={from} to={to} caller={caller} value={value}
                   HelpComponent={comp}
                 />
-              {:else if effect.schema_name === "ERC721"}
-                {@const { nft_link, nft_name, nft_picture, name } = effect}
+              {:else if schema === "ERC721"}
+                {@const { nft_link, nft_name, nft_picture, nft_id, name } = effect}
                 <Erc1155BaseEffect 
                   contract={contract} from={from} to={to} caller={caller}
                   value={value} HelpComponent={comp} nft_link={nft_link}
-                  nft_name={nft_name} nft_picture={nft_picture}
+                  nft_name={nft_name} nft_picture={nft_picture} nft_id={nft_id}
                   name={name}
                 />
-              {:else if effect.schema_name === "ERC1155"}
-                {@const { nft_link, nft_name, nft_picture, name } = effect}
+              {:else if schema === "ERC1155"}
+                {@const { nft_link, nft_name, nft_picture, nft_id, name } = effect}
                 <Erc1155BaseEffect 
                   contract={contract} from={from} to={to} caller={caller}
                   value={value} HelpComponent={comp} nft_link={nft_link}
-                  nft_name={nft_name} nft_picture={nft_picture}
+                  nft_name={nft_name} nft_picture={nft_picture} nft_id={nft_id}
                   name={name}
                 />
               {/if}

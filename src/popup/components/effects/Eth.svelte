@@ -1,7 +1,7 @@
 <script>
   import Etherscanlink from "../etherscanlink.svelte";
   import { format_decimal } from "../../utils";
-  import { eth_price } from "../../stores"
+  import { eth_price, chain } from "../../stores"
   import HelpIcon from "../icons/HelpIcon.svelte"
   import {Decimal} from "decimal.js"
 
@@ -22,7 +22,7 @@
   <div class="flex mb-1 gap-2">
     <div class="flex flex-col justify-center">
       <p class="text-base font-jetbrains font-bold">
-        ETH Transfer
+        {$chain === "eth" ? "ETH" : "BNB"} Transfer
       </p>
     </div>
     <button class="cursor-pointer bg-lightgrey hover:bg-grey rounded-full flex gap-2 p-1 pl-2 border border-grey ml-auto text-darkgrey" on:click={toggle_expanded}>

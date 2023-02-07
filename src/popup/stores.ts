@@ -1,45 +1,25 @@
 import { derived, writable } from "svelte/store"
 import browser from "webextension-polyfill"
+import { CallInfo, Chain, Command, DataMap, EffectType, EthTransfer, ExternalCall, PopupType, RegisterPopupPortCMD } from "../types"
 import { supported_effects } from "./effects"
 import { get_localstorage_accessors } from "./utils"
 
 export const VERSION: string = "__VERSION__"
 export const BROWSER: string = "__BROWSER__"
 
-export interface CallInfo {
-  caller: string
-  contract: string
-  schema_name: string
-  fn_sig: string
-  args: string[]
-  from: string | undefined
-  to: string | undefined
-  value: string | undefined
-  name: string | undefined
-  nft_id: string | undefined
-  nft_picture: string | undefined
-  nft_name: string | undefined
-  nft_link: string | undefined
-  type: "erc20"
-}
-export type EffectType = "inbound" | "outbound" | "approval" | "external"
-export interface EthTransfer {
-  from: string
-  to: string
-  value: string
-  type: "eth"
-}
+export const window_type: PopupType = new URLSearchParams(window?.location?.search).has("floating") ? "floating" : "browser_action"
 
-export const window_type = new URLSearchParams(window?.location?.search).has("floating") ? "floating" : "popup"
-
-export const contract_data_map = writable({})
+let state_last_updated = 0
+export const contract_data_map = writable<DataMap>({eth: {}, bsc: {}})
 export const contracts_touched = writable<string[]>([])
 export const state_diff = writable({})
-export const call_trace = writable([])
-export const effects = writable<Record<EffectType, (CallInfo | EthTransfer)[]>>({} as any)
+export const call_trace = writable<ExternalCall[]>([])
+export const effects = writable<Record<EffectType, (EthTransfer | CallInfo)[]>>({} as any)
 export const your_address = writable("0x0")
 export const eth_price = writable({})
-export const eth_transfers = writable([])
+export const eth_transfers = writable<EthTransfer[]>([])
+export const chain = writable<Chain>("eth")
+export const error = writable<string>("")
 
 export const loading = writable(false)
 export const resolved = writable(false)
@@ -64,31 +44,39 @@ export const tabs = derived(
 export const current_tab = writable(base_tabs[0])
 tabs.subscribe($tabs => current_tab.set($tabs[0]))
 
-const stores = {
-  contract_data_map, contracts_touched, state_diff,
-  call_trace, loading, resolved, effects, eth_price, eth_transfers
-}
+browser.runtime.onMessage.addListener(async (cmd: Command) => {
+  const { msg_type, data } = cmd
+  console.log("Popup receiving message of type", msg_type, cmd)
+  if (msg_type === "sync_global_state") {
+    if (data.timestamp > state_last_updated) {
+      state_last_updated = data.timestamp
 
-browser.runtime.onMessage.addListener(async m => {
-  console.log("Popup receiving message of type", m.msg_type, m)
-  if (!m?.msg_type) {
-    return false
-  }
+      const state = data.state
+      contract_data_map.set(state.data_map)
+      contracts_touched.set(state.contracts_touched)
+      state_diff.set(state.state_diff)
+      call_trace.set(state.call_trace)
+      effects.set(state.effects)
+      your_address.set(state.caller)
+      eth_price.set(state.eth_price)
+      eth_transfers.set(state.eth_transfers)
+      chain.set(state.chain)
+      error.set(state.error)
 
-  if (m.msg_type === "update_transfers") {
-    Object.entries(stores).forEach(([store_name, store]) => {
-      if (store_name in m) {
-        store.set(m[store_name])
-      }
-    })
-    const first_caller: string | undefined = m.call_trace?.[0]?.from
-    if (first_caller) {
-      your_address.set(first_caller)
+      resolved.set(state.resolved)
+      loading.set(Object.entries(state.loading).filter(([k]) => k !== "simulation").some(([_, l]) => l))
     }
-  } else if (m.msg_type === "close_window") {
-    if (m.keep_open !== window_type) {
+
+  } else if (msg_type === "close_window") {
+    if (data.keep_open !== window_type) {
       window.close()
     }
   }
 })
-browser.runtime.sendMessage({ msg_type: "register_popup_port", keep_open: window_type })
+
+browser.runtime.sendMessage({
+  msg_type: "handle_open_popup",
+  data: {
+    opened_type: window_type
+  }
+} as RegisterPopupPortCMD)

@@ -1,7 +1,7 @@
 <script>
   import HelpIcon from "./icons/HelpIcon.svelte";
   import { advanced_tabs, set_advanced_tabs, external_transfers, set_external_transfers, outdated_cache } from "../stores";
-  import { open_update_page } from "../actions";
+  import { open_discord, open_update_page } from "../actions";
 
   let advanced_help_open = false
   const toggle_advanced_help = () => {
@@ -45,10 +45,16 @@
       </p>
     </div>
   {/if}
+  <a
+    class="font-jetbrains text-base text-blue underline decoration-2 underline-offset-2 mb-2" href="#"
+    on:click={open_update_page}
+  >
+    Join The Discord
+  </a>
   {#if $outdated_cache[0]}
     <a
       class="font-jetbrains text-base text-blue underline decoration-2 underline-offset-2 mb-2" href="#"
-      on:click={open_update_page}
+      on:click={open_discord}
     >
       New Version Released, Update Now
     </a>

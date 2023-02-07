@@ -1,5 +1,5 @@
 <script>
-  import { contract_data_map, contracts_touched } from "../stores"
+  import { contract_data_map, contracts_touched, chain } from "../stores"
   import BlueCheckDisplay from "./BlueCheckDisplay.svelte";
   import Chevron from "./Chevron.svelte";
   import Etherscanlink from "./etherscanlink.svelte";
@@ -38,7 +38,7 @@
     expanded_map[contract] = contract in expanded_map ? !expanded_map[contract] : false
   }
 
-  $: info_map = $contracts_touched.map(contract => [contract, $contract_data_map[contract]])
+  $: info_map = $contracts_touched.map(contract => [contract, $contract_data_map[$chain][contract]])
       .map(([contract, data]) => {
         const subheaders = [
           [
@@ -60,10 +60,12 @@
 </script>
 
 <div class="pr-4 py-4">
-  <div class="flex">
-    <p class="text-base font-jetbrains font-bold">Contract</p>
-    <p class="text-base font-jetbrains font-bold ml-auto">Reputation</p>
-  </div>
+    <div class="flex">
+      <p class="text-base font-jetbrains font-bold">Contract</p>
+        {#if $chain !== "bsc"}
+      <p class="text-base font-jetbrains font-bold ml-auto">Reputation</p>
+        {/if}
+    </div>
   {#each info_map as [contract, bigcs_score, subheaders]}
     <div class="flex mt-4 items-center">
       <p class="mr-2">{get_emoji(bigcs_score || -1)} </p>
@@ -73,7 +75,9 @@
           <Chevron expanded={contract in expanded_map ? expanded_map[contract] : true} />
         </button>
       {/if}
-      <p class="ml-auto text-base font-jetbrains font-bold">{bigcs_score === -1 ? "Unknown" : bigcs_score}</p>
+      {#if $chain !== "bsc"}
+        <p class="ml-auto text-base font-jetbrains font-bold">{bigcs_score === -1 ? "Unknown" : bigcs_score}</p>
+      {/if}
     </div>
     <div class="{(contract in expanded_map ? expanded_map[contract] : true) ? '' : 'hidden'}">
       {#each subheaders as [title, subheader]}

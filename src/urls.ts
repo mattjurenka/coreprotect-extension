@@ -1,0 +1,5 @@
+const BASE_URL = "__BACKEND__"
+export const SIMULATE_URL = BASE_URL + "/simulate/"
+export const CONTRACT_DATA_URL = BASE_URL + "/get_contract_data/"
+export const TOKEN_PRICES_URL = BASE_URL + "/token_prices/"
+export const NFT_INFO_URL = BASE_URL + "/nft_info/"

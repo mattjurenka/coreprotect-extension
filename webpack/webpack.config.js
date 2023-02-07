@@ -36,7 +36,7 @@ export default {
   module: {
     rules: [
       {
-        test: /stores.ts$/,
+        test: /(stores|urls).ts$/,
         loader: 'string-replace-loader',
         options: {
           multiple: [
@@ -47,7 +47,11 @@ export default {
             {
               search: '__BROWSER__',
               replace: process.env.BROWSER
-            }
+            },
+            {
+              search: '__BACKEND__',
+              replace: process.env.BACKEND
+            },
           ]
         }
       },

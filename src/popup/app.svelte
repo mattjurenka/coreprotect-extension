@@ -32,7 +32,7 @@
 </style>
 
 
-<div class="min-w-[28rem] p-4 {window_type === 'popup' ? 'h-[36rem] max-w-[28rem]' : 'h-full'}">
+<div class="min-w-[28rem] p-4 {window_type === 'browser_action' ? 'h-[36rem] max-w-[28rem]' : 'h-full'}">
   {#if $accepted_tos}
     <div class="p-4 h-full border-2 border-blue flex flex-col">
       {#if settings_open}
