@@ -34,7 +34,7 @@ const [get_global_state, set_global_state] = get_storage_accessors<GlobalState>(
     token_data: false,
     simulation: false
   },
-  resolved: false,
+  resolved: true,
   last_requested_id: null,
   chain: "eth",
   error: ""
@@ -172,7 +172,7 @@ $global_state_transition.subscribe(async ([state, last_command]) => {
       if (last_requested_id) {
         browser.tabs.sendMessage(last_requested_id, last_command).catch(console.log)
       }
-      $commands.next({ msg_type: "close_window", data: { keep_open: "none" } })
+      $commands.next({ msg_type: "close_window", data: { keep_open: "none", } })
       send_state_update(state => {
         state.resolved = true
       })

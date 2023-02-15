@@ -141,7 +141,9 @@ export const calculate_effects = async (
           const data = await res.json()
           console.log(data)
           const metadata = data.normalized_metadata
-          call.name = data.name
+          if (call.name) {
+            call.name = data.name
+          }
           call.nft_link = metadata.external_link
           call.nft_name = metadata.name
           call.nft_picture = metadata.image

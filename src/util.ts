@@ -41,8 +41,9 @@ export const check_token_type = (contract: string, data_map: DataMap, chain: Cha
     }
   }
 
-  const { moralis_nft_data, moralis_price_data } = contract_data
+  const { moralis_nft_data, moralis_price_data, etherscan_nft_data } = contract_data
   let name = moralis_nft_data?.name || null
+  name = etherscan_nft_data?.tokenName || name
 
   let schema = moralis_nft_data?.contract_type || null
   schema = (moralis_price_data?.usdPrice ? "ERC20" : null) || schema

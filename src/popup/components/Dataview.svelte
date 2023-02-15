@@ -65,8 +65,11 @@
   {:else}
     <p class="mt-16 text-center text-base font-jetbrains">No Transaction Received.</p>
     <div class="mt-4 text-justify text-paragraph font-jetbrains">
-      Ensure you are logged into Metamask and transactions will appear here
+      Ensure you are logged into your wallet and transactions will appear here
       for review before they are forwarded to your wallet and then to the network.
+    </div>
+    <div class="mt-4 text-justify text-paragraph font-jetbrains">
+      At the moment we only support Metamask and Rabby, although other evm wallets are likely to work.
     </div>
   {/if}
 </div>
