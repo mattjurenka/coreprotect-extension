@@ -8,9 +8,11 @@
   $: contract_data = $contract_data_map[$chain][contract_hex]
   $: contract_name = name_override || (contract_data?.uniswap_token_info ?
     `$${contract_data?.uniswap_token_info?.symbol}` : contract_data?.contract_name)
-
+  $: base_scan_url = $chain === "eth" ?
+    "https://etherscan.io/address/" : "https://bscscan.com/address/"
+  
   const open_etherscan = () => {
-    open_link(`https://etherscan.io/address/${contract_hex}`)
+    open_link(base_scan_url + contract_hex)
   }
 
   $: suffix = $your_address === contract_hex ? " (You)" : ""

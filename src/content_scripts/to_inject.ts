@@ -12,8 +12,8 @@ let times_checked = 0
 const intervalId = setInterval(() => {
   if ((window as any).ethereum?.request) {
     const old_request = (window as any).ethereum.request;
-    ((window as any).ethereum.request as any) = (requestArgs: any) => {
-      console.log(requestArgs)
+    const new_request =(requestArgs: any) => {
+      //console.log(requestArgs)
       const network_id: string = (window as any).ethereum.networkVersion
       if (requestArgs.method === "eth_sendTransaction" && ["1", "56"].includes(network_id)) {
         const { from, to, value, data } = requestArgs.params[0]
@@ -46,12 +46,27 @@ const intervalId = setInterval(() => {
         return old_request(requestArgs)
       }
     }
+
+    //if setting window.ethereum.request fails its probably a proxy
+    try {
+      ((window as any).ethereum.request as any) = new_request
+    } catch (e) {
+      console.log((window as any).ethereum);
+      (window as any).ethereum = new Proxy((window as any).ethereum, {
+        get: (target, prop, receiver) => {
+          console.log(target, prop, receiver)
+          return prop === "request" ?
+            new_request : Reflect.get(target, prop, receiver)
+        }
+      })
+    }
+
     clearInterval(intervalId)
   } else {
     times_checked += 1
-    if (times_checked > 100) {
+    if (times_checked > 1000) {
       console.warn("Core Protect could not detect MetaMask.")
       clearInterval(intervalId)
     }
   }
-}, 10)
+}, 1)
